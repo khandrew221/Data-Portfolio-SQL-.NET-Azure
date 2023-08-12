@@ -46,6 +46,41 @@ namespace sqltest
                     DataTable dataTable2 = RunSQLQuery(connection, sql);
 
                     PrintDataTable(dataTable2, ": ");
+
+
+                    Console.WriteLine("\nQuestion: What is the total due on orders from each country?");
+                    Console.WriteLine("=========================================\n");
+
+                    sql = "SELECT Address.CountryRegion, SUM(SalesOrderHeader.TotalDue) FROM[SalesLT].[SalesOrderHeader] " +
+                        "LEFT JOIN[SalesLT].[CustomerAddress] ON SalesOrderHeader.CustomerID = CustomerAddress.CustomerID " +
+                        "LEFT JOIN[SalesLT].[Address] ON CustomerAddress.AddressID = Address.AddressID " +
+                        "GROUP BY Address.CountryRegion;";
+                    DataTable dataTable3 = RunSQLQuery(connection, sql);
+
+                    //The query will not include countries with nothing due on orders; they should be added
+                    //to the dataTable as 0
+                    if (dataTable3.Rows.Count < dataTable1.Rows.Count)
+                    {
+                        //iterate all countries found
+                        for (int i = 0; i < dataTable1.Rows.Count; i++)
+                        {
+                            //get the country name
+                            String country = dataTable1.Rows[i].Field<String>("CountryRegion");
+
+                            //check the order totals data table for the country
+                            bool containsCountry = dataTable3.AsEnumerable().Any(row => country == row.Field<String>("CountryRegion"));
+
+                            //if the country is not found, add a new row to the datatable that gives it $0 due on orders 
+                            if (!containsCountry)
+                            {
+                                dataTable3.Rows.Add(new Object[] { country, 0 });
+                            }
+                        }
+                    }    
+
+                    PrintDataTable(dataTable3, ": $");
+
+
                 }
             }
             catch (SqlException e)
