@@ -4,6 +4,9 @@ using System.Text;
 using System.Data;
 using System.Reflection.PortableExecutable;
 using System.Data.Common;
+using System.Net;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace sqltest
 {
@@ -21,15 +24,28 @@ namespace sqltest
 
                 using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
                 {
-                    Console.WriteLine("\nQuery data example:");
+                    connection.Open();
+
+                    Console.WriteLine("\nQuestion: How many countries are customers from, and what are they?");
                     Console.WriteLine("=========================================\n");
 
-                    String sql = "SELECT * FROM [SalesLT].[Address]";
+                    String sql = "SELECT DISTINCT CountryRegion FROM [SalesLT].[Address]";
+                    DataTable dataTable1 = RunSQLQuery(connection, sql);
 
-                    connection.Open();
-                    
-                    DataTable dataTable = RunSQLQuery(connection, sql);
-                    PrintDataTable(dataTable, ", ");
+                    Console.WriteLine("Customers are from " + dataTable1.Rows.Count + " different countries.\n");
+                    Console.WriteLine("Those countries are:\n");
+                    PrintDataTable(dataTable1, ", ");
+
+                    Console.WriteLine("\nQuestion: How many customers are there from each country?");
+                    Console.WriteLine("=========================================\n");
+
+                    sql = "SELECT Address.CountryRegion, COUNT(CustomerAddress.CustomerID) AS NumberOfCustomers " +
+                        "FROM[SalesLT].[CustomerAddress] " +
+                        "LEFT JOIN[SalesLT].[Address] ON CustomerAddress.AddressID = Address.AddressID " +
+                        "GROUP BY SalesLT.Address.CountryRegion";
+                    DataTable dataTable2 = RunSQLQuery(connection, sql);
+
+                    PrintDataTable(dataTable2, ": ");
                 }
             }
             catch (SqlException e)
