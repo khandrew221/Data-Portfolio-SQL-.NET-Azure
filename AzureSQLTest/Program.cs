@@ -47,7 +47,6 @@ namespace sqltest
 
                     PrintDataTable(dataTable2, ": ");
 
-
                     Console.WriteLine("\nQuestion: What is the total due on orders from each country?");
                     Console.WriteLine("=========================================\n");
 
