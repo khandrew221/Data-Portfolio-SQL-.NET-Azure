@@ -42,43 +42,48 @@ namespace sqltest
                     sql = "SELECT Address.CountryRegion, COUNT(CustomerAddress.CustomerID) AS NumberOfCustomers " +
                         "FROM[SalesLT].[CustomerAddress] " +
                         "LEFT JOIN[SalesLT].[Address] ON CustomerAddress.AddressID = Address.AddressID " +
-                        "GROUP BY SalesLT.Address.CountryRegion";
+                        "GROUP BY Address.CountryRegion";
                     DataTable dataTable2 = RunSQLQuery(connection, sql);
 
                     PrintDataTable(dataTable2, ": ");
 
-                    Console.WriteLine("\nQuestion: What is the total due on orders from each country?");
+                    Console.WriteLine("\nQuestion: What is the total due on all orders from each country?");
                     Console.WriteLine("=========================================\n");
 
-                    sql = "SELECT Address.CountryRegion, SUM(SalesOrderHeader.TotalDue) FROM[SalesLT].[SalesOrderHeader] " +
+                    sql = "SELECT Address.CountryRegion, SUM(SalesOrderHeader.TotalDue) AS 'AllOrdersTotalDue' " +
+                        "FROM[SalesLT].[SalesOrderHeader] " +
                         "LEFT JOIN[SalesLT].[CustomerAddress] ON SalesOrderHeader.CustomerID = CustomerAddress.CustomerID " +
-                        "LEFT JOIN[SalesLT].[Address] ON CustomerAddress.AddressID = Address.AddressID " +
-                        "GROUP BY Address.CountryRegion;";
+                        "RIGHT JOIN[SalesLT].[Address] ON CustomerAddress.AddressID = Address.AddressID " +
+                        "GROUP BY Address.CountryRegion";
                     DataTable dataTable3 = RunSQLQuery(connection, sql);
 
-                    //The query will not include countries with nothing due on orders; they should be added
-                    //to the dataTable as 0
-                    if (dataTable3.Rows.Count < dataTable1.Rows.Count)
-                    {
-                        //iterate all countries found
-                        for (int i = 0; i < dataTable1.Rows.Count; i++)
+                    //The query will return null for countries with no orders; replace these with 0
+                    //The column needs to be made writable first
+                    dataTable3.Columns[1].ReadOnly = false;
+                    foreach (DataRow row in dataTable3.Rows)
+                    {                        
+                        if (row[1] is System.DBNull)
                         {
-                            //get the country name
-                            String country = dataTable1.Rows[i].Field<String>("CountryRegion");
-
-                            //check the order totals data table for the country
-                            bool containsCountry = dataTable3.AsEnumerable().Any(row => country == row.Field<String>("CountryRegion"));
-
-                            //if the country is not found, add a new row to the datatable that gives it $0 due on orders 
-                            if (!containsCountry)
-                            {
-                                dataTable3.Rows.Add(new Object[] { country, 0 });
-                            }
+                            row[1] = 0;
                         }
-                    }    
+                    }
 
                     PrintDataTable(dataTable3, ": $");
 
+                    Console.WriteLine("\nQuestion: Which product has had the most units shipped to addresses in the United States?");
+                    Console.WriteLine("=========================================\n");
+
+                    sql = "SELECT TOP 1 Product.Name, SUM(SalesOrderDetail.OrderQty) AS 'Total US Sales' " +
+                        "FROM[SalesLT].[SalesOrderDetail] " +
+                        "LEFT JOIN[SalesLT].[Product] ON SalesOrderDetail.ProductID = Product.ProductID " +
+                        "LEFT JOIN[SalesLT].[SalesOrderHeader] ON SalesOrderDetail.SalesOrderID = SalesOrderHeader.SalesOrderID " +
+                        "LEFT JOIN[SalesLT].[Address] ON SalesOrderHeader.ShipToAddressID = Address.AddressID " +
+                        "WHERE Address.CountryRegion = 'United States' " +
+                        "GROUP BY Product.Name " +
+                        "ORDER BY 'Total US Sales' DESC";
+                    DataTable dataTable4 = RunSQLQuery(connection, sql);
+
+                    PrintDataTable(dataTable4, ": ");
 
                 }
             }
