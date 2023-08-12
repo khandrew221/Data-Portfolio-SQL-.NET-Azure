@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace sqltest
 {
-    class Program
+    class AzureSQLTest
     {
         static void Main(string[] args)
         {
@@ -26,7 +26,8 @@ namespace sqltest
                 {
                     connection.Open();
 
-                    Console.WriteLine("\nQuestion: How many countries are customers from, and what are they?");
+                    Console.WriteLine("=========================================");
+                    Console.WriteLine("Question 1: How many countries are customers from, and what are those countries?");
                     Console.WriteLine("=========================================\n");
 
                     String sql = "SELECT DISTINCT CountryRegion FROM [SalesLT].[Address]";
@@ -36,7 +37,8 @@ namespace sqltest
                     Console.WriteLine("Those countries are:\n");
                     PrintDataTable(dataTable1, ", ");
 
-                    Console.WriteLine("\nQuestion: How many customers are there from each country?");
+                    Console.WriteLine("\n=========================================");
+                    Console.WriteLine("Question 2: How many customers are there from each country?");
                     Console.WriteLine("=========================================\n");
 
                     sql = "SELECT Address.CountryRegion, COUNT(CustomerAddress.CustomerID) AS NumberOfCustomers " +
@@ -47,7 +49,8 @@ namespace sqltest
 
                     PrintDataTable(dataTable2, ": ");
 
-                    Console.WriteLine("\nQuestion: What is the total due on all orders from each country?");
+                    Console.WriteLine("\n=========================================");
+                    Console.WriteLine("Question 3: What is the total due on all orders from each country?");
                     Console.WriteLine("=========================================\n");
 
                     sql = "SELECT Address.CountryRegion, SUM(SalesOrderHeader.TotalDue) AS 'AllOrdersTotalDue' " +
@@ -70,7 +73,8 @@ namespace sqltest
 
                     PrintDataTable(dataTable3, ": $");
 
-                    Console.WriteLine("\nQuestion: Which product has had the most units shipped to addresses in the United States?");
+                    Console.WriteLine("\n=========================================");
+                    Console.WriteLine("Question 4: Which product has had the most units shipped to addresses in the United States?");
                     Console.WriteLine("=========================================\n");
 
                     sql = "SELECT TOP 1 Product.Name, SUM(SalesOrderDetail.OrderQty) AS 'Total US Sales' " +
