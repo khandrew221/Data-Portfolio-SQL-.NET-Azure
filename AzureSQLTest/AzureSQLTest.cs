@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.VisualBasic;
 
 namespace sqltest
 {
@@ -88,6 +89,31 @@ namespace sqltest
                     DataTable dataTable4 = RunSQLQuery(connection, sql);
 
                     PrintDataTable(dataTable4, ": ");
+
+
+                    Console.WriteLine("\n=========================================");
+                    Console.WriteLine("Question 5: What is the total number of units sold, and for what total sales value, for each parent product category?");
+                    Console.WriteLine("=========================================\n");
+
+                    sql = "SELECT ParentProductCategoryName, SUM(OrderQty) AS TotalUnits, SUM(LineTotal) AS TotalSales " +
+                        "FROM [SalesLT].[SalesOrderDetail] " +
+                        "LEFT JOIN [SalesLT].[Product] ON SalesOrderDetail.ProductID = Product.ProductID " +
+                        "LEFT JOIN [SalesLT].[vGetAllCategories] ON Product.ProductCategoryID = vGetAllCategories.ProductCategoryID " +
+                        "GROUP BY ParentProductCategoryName";
+                    DataTable dataTable5 = RunSQLQuery(connection, sql);
+
+                    using (DataTableReader reader = dataTable5.CreateDataReader())
+                    {
+                        while (reader.Read())
+                        {
+                            IDataRecord record = (IDataRecord)reader;
+                            String category = record[0].ToString();
+                            String units = record[1].ToString();
+                            String sales = record[2].ToString();
+                            String output = string.Format("Product category {0} sold {1} units for a total of ${2} in sales.", category, units, sales);
+                            Console.WriteLine(output);
+                        }
+                    }
 
                 }
             }
