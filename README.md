@@ -1,6 +1,6 @@
 # Data Analysis Portfolio: SQL, C# .NET, Azure
 
-This portfolio demonstrates simple projects that use a .NET framework and C# code to connect to and query Azure SQL databases.
+This portfolio demonstrates simple projects that use a .NET framework and C# code to connect to and query Azure SQL databases. Screenshots of outputs are included in .png files.
 
 ## AzureSQLTest.cs
 
