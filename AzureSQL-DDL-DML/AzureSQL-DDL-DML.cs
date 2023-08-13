@@ -101,6 +101,7 @@ namespace sqltest
                     //...after we make sure the database is empty. Drop order is important because there are foreign keys!
                     Console.WriteLine("Clearing database...");
                     RunSQLQuery(connection, "DROP TABLE IF EXISTS prescription, patient, doctor, drug");
+                    RunSQLQuery(connection, "DROP VIEW IF EXISTS patientdrug");
 
                     Console.WriteLine("Creating tables...");
                     // the tables need to be created
@@ -145,6 +146,15 @@ namespace sqltest
                     }
 
                     Console.WriteLine("Database created!\n");
+
+                    //now the database is done, let's create a useful view showing which patients have
+                    //a prescription for which drug
+                    Console.WriteLine("Creating view...");
+                    RunSQLQuery(connection, "CREATE VIEW patientdrug AS SELECT patient.patient_name, drug_name FROM prescription LEFT JOIN patient ON patient.patient_id = prescription.patient_id LEFT JOIN drug ON drug.drug_code = prescription.drug_code");
+
+                    Console.WriteLine("Retriving view...\n");
+                    //and pull that view into a dataframe and print the results
+                    PrintDataTable(RunSQLQuery(connection, "SELECT * FROM patientdrug"), ": ");
                 }
             }
             catch (SqlException e)
