@@ -14,6 +14,8 @@ namespace sqltest
             //First, create datatables corresponding to the CSV files. This allows for cleaning and normalisation
             //before commiting anything to the database with a SQL query 
 
+            Console.WriteLine("Reading from CSVs...");
+
             DataTable doctorDirty = CSVtoDataTable("D:\\VS Projects\\AzureSQLTest\\AzureSQL-DDL-DML\\CSV files\\doctor.csv", ',');
             DataTable drugDirty = CSVtoDataTable("D:\\VS Projects\\AzureSQLTest\\AzureSQL-DDL-DML\\CSV files\\drug.csv", ',');
             DataTable patientDirty = CSVtoDataTable("D:\\VS Projects\\AzureSQLTest\\AzureSQL-DDL-DML\\CSV files\\patient.csv", ',');
@@ -21,9 +23,11 @@ namespace sqltest
 
             // The files used here are simple and clean in terms of values parsable to the correct data type,
             // and already normalised, so much of the work of converting a spreadsheet style dataset into a database is already done.
-            
+
             // However, all data has been read in as strings. That needs to be fixed, so the initial tables are labelled "dirty" and
             // a minor cleaning process must take place.
+
+            Console.WriteLine("Cleaning data...");
 
             //the doctor and drug dataframes only contain string data anyway
             DataTable doctorClean = doctorDirty;
@@ -78,36 +82,8 @@ namespace sqltest
                 prescriptionClean.Rows.Add(cleanRow);
             }
 
-            Console.WriteLine("Table 'doctor':\n");
-            PrintDataTable(doctorClean, ", ");
-            Console.WriteLine("\n");
+            Console.WriteLine("Connecting to database...");
 
-            Console.WriteLine("Table 'drug':\n");
-            PrintDataTable(drugClean, ", ");
-            Console.WriteLine("\n");
-
-            Console.WriteLine("Table 'patient':\n");
-            PrintDataTable(patientClean, ", ");
-            Console.WriteLine("\n");
-
-            Console.WriteLine("Table 'prescription':\n");
-            PrintDataTable(prescriptionClean, ", ");
-            Console.WriteLine("\n");
-
-
-            
-
-            Console.WriteLine(SQLCreateTableString(doctorClean));
-            Console.WriteLine(SQLCreateTableString(drugClean));
-            Console.WriteLine(SQLCreateTableString(patientClean));
-            Console.WriteLine(SQLCreateTableString(prescriptionClean));
-
-            foreach (DataRow row in patientClean.Rows)
-            {
-                Console.WriteLine(SQLInsertRowString("patient", row));
-            }
-
-            
             //Now the connection to the database can start
             try
             {
@@ -122,19 +98,32 @@ namespace sqltest
                     connection.Open();
 
                     //The connection is open and adding tables to the database can begin...
-                    //...after we make sure the database is empty
-                    String sql = "DROP TABLE IF EXISTS doctor, drug, patient, prescription";
-                    RunSQLQuery(connection, sql);
+                    //...after we make sure the database is empty. Drop order is important because there are foreign keys!
+                    Console.WriteLine("Clearing database...");
+                    RunSQLQuery(connection, "DROP TABLE IF EXISTS prescription, patient, doctor, drug");
 
-
+                    Console.WriteLine("Creating tables...");
                     // the tables need to be created
                     RunSQLQuery(connection, SQLCreateTableString(doctorClean));
                     RunSQLQuery(connection, SQLCreateTableString(drugClean));
                     RunSQLQuery(connection, SQLCreateTableString(patientClean));
                     RunSQLQuery(connection, SQLCreateTableString(prescriptionClean));
 
+                    // they're nice tables, but with no keys defined to link them up into a real database
+                    Console.WriteLine("Assigning keys...");
+                    RunSQLQuery(connection, "ALTER TABLE doctor ADD PRIMARY KEY (doctor_id)");
+                    RunSQLQuery(connection, "ALTER TABLE patient ADD PRIMARY KEY (patient_id)");
+                    RunSQLQuery(connection, "ALTER TABLE drug ADD PRIMARY KEY (drug_code)");
 
-                    // and populated with data 
+                    RunSQLQuery(connection, "ALTER TABLE patient ADD FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)");
+                    RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)");
+                    RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (patient_id) REFERENCES patient(patient_id)");
+                    RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (drug_code) REFERENCES drug(drug_code)");
+
+
+                    // and populated with data. Again the order tables are populated is sensitive due to the presence
+                    // of foreign keys
+                    Console.WriteLine("Populating tables...");
                     foreach (DataRow row in doctorClean.Rows)
                     {
                         RunSQLQuery(connection, SQLInsertRowString(doctorClean.TableName, row));
@@ -155,6 +144,7 @@ namespace sqltest
                         RunSQLQuery(connection, SQLInsertRowString(prescriptionClean.TableName, row));
                     }
 
+                    Console.WriteLine("Database created!\n");
                 }
             }
             catch (SqlException e)
@@ -308,7 +298,7 @@ namespace sqltest
 
             foreach (DataColumn column in table.Columns) 
             {
-                output += column.ColumnName + " " + SQLDataType(column.DataType.ToString()) + ", ";
+                output += column.ColumnName + " " + SQLDataType(column.DataType.ToString()) + " NOT NULL, ";
             }
 
             //clean up last comma
