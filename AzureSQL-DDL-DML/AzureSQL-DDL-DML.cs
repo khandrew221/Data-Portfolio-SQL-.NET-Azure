@@ -1,6 +1,8 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System;
 using System.Data;
+using System.Diagnostics.Metrics;
 
 namespace sqltest
 {
@@ -25,10 +27,12 @@ namespace sqltest
 
             //the doctor and drug dataframes only contain string data anyway
             DataTable doctorClean = doctorDirty;
+            doctorClean.TableName = "doctor";
             DataTable drugClean = drugDirty;
+            drugClean.TableName = "drug";
 
             //the patient dataframe contains multiple data types
-            DataTable patientClean = new DataTable();
+            DataTable patientClean = new DataTable("patient");
             patientClean.Columns.Add(patientDirty.Columns[0].ColumnName, typeof(String));
             patientClean.Columns.Add(patientDirty.Columns[1].ColumnName, typeof(String));
             patientClean.Columns.Add(patientDirty.Columns[2].ColumnName, typeof(DateTime));
@@ -53,7 +57,7 @@ namespace sqltest
             }
 
             //A similar process can be applied to the prescription dataframe
-            DataTable prescriptionClean = new DataTable();
+            DataTable prescriptionClean = new DataTable("prescription");
             prescriptionClean.Columns.Add(prescriptionDirty.Columns[0].ColumnName, typeof(String));
             prescriptionClean.Columns.Add(prescriptionDirty.Columns[1].ColumnName, typeof(DateTime));
             prescriptionClean.Columns.Add(prescriptionDirty.Columns[2].ColumnName, typeof(String));
@@ -91,7 +95,20 @@ namespace sqltest
             Console.WriteLine("\n");
 
 
-            /*/Now the connection to the database can start
+            
+
+            Console.WriteLine(SQLCreateTableString(doctorClean));
+            Console.WriteLine(SQLCreateTableString(drugClean));
+            Console.WriteLine(SQLCreateTableString(patientClean));
+            Console.WriteLine(SQLCreateTableString(prescriptionClean));
+
+            foreach (DataRow row in patientClean.Rows)
+            {
+                Console.WriteLine(SQLInsertRowString("patient", row));
+            }
+
+            
+            //Now the connection to the database can start
             try
             {
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
@@ -107,22 +124,44 @@ namespace sqltest
                     //The connection is open and adding tables to the database can begin...
                     //...after we make sure the database is empty
                     String sql = "DROP TABLE IF EXISTS doctor, drug, patient, prescription";
-                    RunNoReturnSQLQuery(connection, sql);
+                    RunSQLQuery(connection, sql);
 
 
-                    // the tables need to be created with the appropriate data types. 
-                    sql = "DROP TABLE IF EXISTS doctor, drug, patient, prescription";
-                    RunNoReturnSQLQuery(connection, sql);
+                    // the tables need to be created
+                    RunSQLQuery(connection, SQLCreateTableString(doctorClean));
+                    RunSQLQuery(connection, SQLCreateTableString(drugClean));
+                    RunSQLQuery(connection, SQLCreateTableString(patientClean));
+                    RunSQLQuery(connection, SQLCreateTableString(prescriptionClean));
 
 
+                    // and populated with data 
+                    foreach (DataRow row in doctorClean.Rows)
+                    {
+                        RunSQLQuery(connection, SQLInsertRowString(doctorClean.TableName, row));
+                    }
+
+                    foreach (DataRow row in drugClean.Rows)
+                    {
+                        RunSQLQuery(connection, SQLInsertRowString(drugClean.TableName, row));
+                    }
+                    
+                    foreach (DataRow row in patientClean.Rows)
+                    {
+                        RunSQLQuery(connection, SQLInsertRowString(patientClean.TableName, row));
+                    }
+
+                    foreach (DataRow row in prescriptionClean.Rows)
+                    {
+                        RunSQLQuery(connection, SQLInsertRowString(prescriptionClean.TableName, row));
+                    }
 
                 }
             }
             catch (SqlException e)
             {
                 Console.WriteLine(e.ToString());
-            }*/
-
+            }
+           
         }
 
         /*
@@ -149,24 +188,6 @@ namespace sqltest
             }
 
             return dataTable;
-        }
-
-        /*
-        * Runs a SQL query without returning anything
-        */
-        private static void RunNoReturnSQLQuery(SqlConnection connection, String sql)
-        {
-            try
-            {
-                using (SqlCommand command = new SqlCommand(sql, connection))
-                {
-                }
-            }
-            catch (SqlException e)
-            {
-                Console.WriteLine("RunNoReturnSQLQuery failed.");
-                Console.WriteLine(e.ToString());
-            }
         }
 
         /*
@@ -259,11 +280,73 @@ namespace sqltest
 
         /**
         * Converts the DataTable data type string to the best SQL match 
-        */
+        *     
+         * This should have considerably more range and safeguards if it 
+         * was being used without prior knowledge of exactly what is going in
+         */
         public static String SQLDataType(string type)
         {
+            if (type.Equals("System.String"))
+                return new String("varchar(255)");
+            if (type.Equals("System.DateTime"))
+                return new String("datetime");
+            if (type.Equals("System.Decimal"))
+                return new String("float");
+            return type;
+        }
 
-            return new String("");
+        /*
+         * This should have considerably more range and safeguards if it 
+         * was being used without prior knowledge of exactly what is going in
+         */
+        public static String SQLCreateTableString(DataTable table)
+        {
+            String output = new String("");
+
+            output += "CREATE TABLE " + table.TableName;
+            output += " ( ";
+
+            foreach (DataColumn column in table.Columns) 
+            {
+                output += column.ColumnName + " " + SQLDataType(column.DataType.ToString()) + ", ";
+            }
+
+            //clean up last comma
+            output = output.Remove(output.Length - 2);
+
+            output += " )";
+
+            return output;
+        }
+
+        /*
+         * This should have considerably more range and safeguards if it 
+         * was being used without prior knowledge of exactly what is going in
+         */
+        public static String SQLInsertRowString(String tableName, DataRow row)
+        {
+            String output = new String("");
+
+            output += "INSERT INTO " + tableName;
+            output += " VALUES (";
+
+            foreach (DataColumn column in row.Table.Columns)
+            {
+                string data = row[column].ToString();
+                if (column.DataType.ToString().Equals("System.String"))
+                    output += "'" + data + "', ";
+                else if (column.DataType.ToString().Equals("System.DateTime"))
+                    output += data.Remove(data.Length - 9) + ", ";
+                else
+                    output += data + ", ";
+            }
+
+            //clean up last comma
+            output = output.Remove(output.Length - 2);
+
+            output += " )";
+
+            return output;
         }
 
     }
