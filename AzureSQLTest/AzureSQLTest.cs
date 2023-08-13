@@ -1,13 +1,5 @@
-﻿using System;
-using Microsoft.Data.SqlClient;
-using System.Text;
+﻿using Microsoft.Data.SqlClient;
 using System.Data;
-using System.Reflection.PortableExecutable;
-using System.Data.Common;
-using System.Net;
-using System.Reflection;
-using System.Text.RegularExpressions;
-using Microsoft.VisualBasic;
 
 namespace sqltest
 {
@@ -65,7 +57,7 @@ namespace sqltest
                     //The column needs to be made writable first
                     dataTable3.Columns[1].ReadOnly = false;
                     foreach (DataRow row in dataTable3.Rows)
-                    {                        
+                    {
                         if (row[1] is System.DBNull)
                         {
                             row[1] = 0;
@@ -156,10 +148,10 @@ namespace sqltest
         {
             using (DataTableReader reader = table.CreateDataReader())
             {
-               while (reader.Read())
-               {
-                   PrintDelimitedRow((IDataRecord)reader, del);                    
-               }
+                while (reader.Read())
+                {
+                    PrintDelimitedRow((IDataRecord)reader, del);
+                }
             }
         }
 
@@ -172,15 +164,15 @@ namespace sqltest
             int fields = dataRecord.FieldCount;
 
             // if there are fields...
-            if (fields > 0) 
+            if (fields > 0)
             {
                 String output = "";
 
                 //construct an output string...
                 for (int i = 0; i < fields; i++)
                 {
-                    output += dataRecord[i].ToString(); 
-                    if (i < fields-1)
+                    output += dataRecord[i].ToString();
+                    if (i < fields - 1)
                     {
                         output += del;
                     }
@@ -189,7 +181,7 @@ namespace sqltest
                 //...and write it to console
                 Console.WriteLine(output);
 
-            } 
+            }
             else
             {
                 Console.WriteLine("No fields found!");
