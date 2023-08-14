@@ -83,85 +83,85 @@ namespace sqltest
             }
 
             Console.WriteLine("Connecting to database...");
+ 
+             //Now the connection to the database can start
+             try
+             {
+                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+                 builder.DataSource = "myportfolioserver.database.windows.net";
+                 builder.UserID = "azureuser";
+                 builder.Password = "LgFF8>CGc5w]-4w";
+                 builder.InitialCatalog = "ReadWriteDatabase";
 
-            //Now the connection to the database can start
-            try
-            {
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-                builder.DataSource = "myportfolioserver.database.windows.net";
-                builder.UserID = "azureuser";
-                builder.Password = "LgFF8>CGc5w]-4w";
-                builder.InitialCatalog = "ReadWriteDatabase";
+                 using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+                 {
+                     connection.Open();
 
-                using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
-                {
-                    connection.Open();
+                     //The connection is open and adding tables to the database can begin...
+                     //...after we make sure the database is empty. Drop order is important because there are foreign keys!
+                     Console.WriteLine("Clearing database...");
+                     RunSQLQuery(connection, "DROP TABLE IF EXISTS prescription, patient, doctor, drug");
+                     RunSQLQuery(connection, "DROP VIEW IF EXISTS patientdrug");
 
-                    //The connection is open and adding tables to the database can begin...
-                    //...after we make sure the database is empty. Drop order is important because there are foreign keys!
-                    Console.WriteLine("Clearing database...");
-                    RunSQLQuery(connection, "DROP TABLE IF EXISTS prescription, patient, doctor, drug");
-                    RunSQLQuery(connection, "DROP VIEW IF EXISTS patientdrug");
+                     Console.WriteLine("Creating tables...");
+                     // the tables need to be created
+                     RunSQLQuery(connection, SQLCreateTableString(doctorClean));
+                     RunSQLQuery(connection, SQLCreateTableString(drugClean));
+                     RunSQLQuery(connection, SQLCreateTableString(patientClean));
+                     RunSQLQuery(connection, SQLCreateTableString(prescriptionClean));
 
-                    Console.WriteLine("Creating tables...");
-                    // the tables need to be created
-                    RunSQLQuery(connection, SQLCreateTableString(doctorClean));
-                    RunSQLQuery(connection, SQLCreateTableString(drugClean));
-                    RunSQLQuery(connection, SQLCreateTableString(patientClean));
-                    RunSQLQuery(connection, SQLCreateTableString(prescriptionClean));
+                     // they're nice tables, but with no keys defined to link them up into a real database
+                     Console.WriteLine("Assigning keys...");
+                     RunSQLQuery(connection, "ALTER TABLE doctor ADD PRIMARY KEY (doctor_id)");
+                     RunSQLQuery(connection, "ALTER TABLE patient ADD PRIMARY KEY (patient_id)");
+                     RunSQLQuery(connection, "ALTER TABLE drug ADD PRIMARY KEY (drug_code)");
 
-                    // they're nice tables, but with no keys defined to link them up into a real database
-                    Console.WriteLine("Assigning keys...");
-                    RunSQLQuery(connection, "ALTER TABLE doctor ADD PRIMARY KEY (doctor_id)");
-                    RunSQLQuery(connection, "ALTER TABLE patient ADD PRIMARY KEY (patient_id)");
-                    RunSQLQuery(connection, "ALTER TABLE drug ADD PRIMARY KEY (drug_code)");
-
-                    RunSQLQuery(connection, "ALTER TABLE patient ADD FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)");
-                    RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)");
-                    RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (patient_id) REFERENCES patient(patient_id)");
-                    RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (drug_code) REFERENCES drug(drug_code)");
+                     RunSQLQuery(connection, "ALTER TABLE patient ADD FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)");
+                     RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)");
+                     RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (patient_id) REFERENCES patient(patient_id)");
+                     RunSQLQuery(connection, "ALTER TABLE prescription ADD FOREIGN KEY (drug_code) REFERENCES drug(drug_code)");
 
 
-                    // and populated with data. Again the order tables are populated is sensitive due to the presence
-                    // of foreign keys
-                    Console.WriteLine("Populating tables...");
-                    foreach (DataRow row in doctorClean.Rows)
-                    {
-                        RunSQLQuery(connection, SQLInsertRowString(doctorClean.TableName, row));
-                    }
+                     // and populated with data. Again the order tables are populated is sensitive due to the presence
+                     // of foreign keys
+                     Console.WriteLine("Populating tables...");
+                     foreach (DataRow row in doctorClean.Rows)
+                     {
+                         RunSQLQuery(connection, SQLInsertRowString(doctorClean.TableName, row));
+                     }
 
-                    foreach (DataRow row in drugClean.Rows)
-                    {
-                        RunSQLQuery(connection, SQLInsertRowString(drugClean.TableName, row));
-                    }
-                    
-                    foreach (DataRow row in patientClean.Rows)
-                    {
-                        RunSQLQuery(connection, SQLInsertRowString(patientClean.TableName, row));
-                    }
+                     foreach (DataRow row in drugClean.Rows)
+                     {
+                         RunSQLQuery(connection, SQLInsertRowString(drugClean.TableName, row));
+                     }
 
-                    foreach (DataRow row in prescriptionClean.Rows)
-                    {
-                        RunSQLQuery(connection, SQLInsertRowString(prescriptionClean.TableName, row));
-                    }
+                     foreach (DataRow row in patientClean.Rows)
+                     {
+                         RunSQLQuery(connection, SQLInsertRowString(patientClean.TableName, row));
+                     }
 
-                    Console.WriteLine("Database created!\n");
+                     foreach (DataRow row in prescriptionClean.Rows)
+                     {
+                         RunSQLQuery(connection, SQLInsertRowString(prescriptionClean.TableName, row));
+                     }
 
-                    //now the database is done, let's create a useful view showing which patients have
-                    //a prescription for which drug
-                    Console.WriteLine("Creating view...");
-                    RunSQLQuery(connection, "CREATE VIEW patientdrug AS SELECT patient.patient_name, drug_name FROM prescription LEFT JOIN patient ON patient.patient_id = prescription.patient_id LEFT JOIN drug ON drug.drug_code = prescription.drug_code");
+                     Console.WriteLine("Database created!\n");
 
-                    Console.WriteLine("Retriving view...\n");
-                    //and pull that view into a dataframe and print the results
-                    PrintDataTable(RunSQLQuery(connection, "SELECT * FROM patientdrug"), ": ");
-                }
-            }
-            catch (SqlException e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-           
+                     //now the database is done, let's create a useful view showing which patients have
+                     //a prescription for which drug
+                     Console.WriteLine("Creating view...");
+                     RunSQLQuery(connection, "CREATE VIEW patientdrug AS SELECT patient.patient_name, drug_name FROM prescription LEFT JOIN patient ON patient.patient_id = prescription.patient_id LEFT JOIN drug ON drug.drug_code = prescription.drug_code");
+
+                     Console.WriteLine("Retriving view...\n");
+                     //and pull that view into a dataframe and print the results
+                     PrintDataTable(RunSQLQuery(connection, "SELECT * FROM patientdrug"), ": ");
+                 }
+             }
+             catch (SqlException e)
+             {
+                 Console.WriteLine(e.ToString());
+             }
+
         }
 
         /*
@@ -289,7 +289,7 @@ namespace sqltest
             if (type.Equals("System.String"))
                 return new String("varchar(255)");
             if (type.Equals("System.DateTime"))
-                return new String("datetime");
+                return new String("date");
             if (type.Equals("System.Decimal"))
                 return new String("float");
             return type;
@@ -336,7 +336,11 @@ namespace sqltest
                 if (column.DataType.ToString().Equals("System.String"))
                     output += "'" + data + "', ";
                 else if (column.DataType.ToString().Equals("System.DateTime"))
-                    output += data.Remove(data.Length - 9) + ", ";
+                {
+                    //date format conversion needs to take place to YYYY-MM-DD
+                    data = String.Format("{0:u}", row[column]);
+                    output += "'" + data.Remove(data.Length - 10) + "', ";
+                }                    
                 else
                     output += data + ", ";
             }
