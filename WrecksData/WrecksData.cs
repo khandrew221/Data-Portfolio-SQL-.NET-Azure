@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Data;
+using System.Diagnostics.Metrics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.ConstrainedExecution;
-
 
 
 class WrecksFileReader
@@ -60,9 +60,14 @@ class WrecksFileReader
 
                 String[] tokens = line.Split(new char[] { '\t' });
 
+                for (int j = 0; j < tokens.Length; j++) 
+                {
+                    tokens[j] = TrimToken(tokens[j]);
+                }
+
                 if (!ValidateRow(tokens))
                 {
-                    Console.WriteLine("Invalid row at line " + i);
+                    Console.WriteLine("Invalid row at line " );
                     Console.WriteLine("Tokens found: " + tokens.Length);
                     Console.WriteLine("Empty tokens found: " + EmptyTokensList(tokens).Count);
 
@@ -72,12 +77,19 @@ class WrecksFileReader
                     }
                     lineReadErrors++;
                 }
+
+                /*
+                foreach (String val in tokens)
+                {
+                    Console.WriteLine(val);
+                }*/
+
             }
 
             Console.WriteLine("Lines read in with " + lineReadErrors + " invalid lines found.");
         }
 
-        // finds empty tokens in a list and returns a list of their indices
+        // finds empty tokens in an array and returns a list of their indices
         static List<int> EmptyTokensList(string[] tokens)
         {
             List<int> output = new List<int>();
@@ -85,11 +97,6 @@ class WrecksFileReader
             for (int i = 0; i < tokens.Length; i++)
             {
                 if (string.IsNullOrWhiteSpace(tokens[i]))
-                    output.Add(i);
-                else if (tokens[i].Equals("\"\"") ||        //this would be better achieved with a regex or list of strings to treat as empty 
-                        tokens[i].Equals("\" \"") ||
-                        tokens[i].Equals("\'\'") ||
-                        tokens[i].Equals("\' \'"))
                     output.Add(i);
             }
 
@@ -134,6 +141,25 @@ class WrecksFileReader
 
             //all tests passed; line is validated
             return true;
+        }
+
+        // Trims tokens of whitespace and enclosing quotation marks
+        string TrimToken(string token)
+        {
+            String trimToken = token;
+
+            trimToken = trimToken.TrimStart();          //remove whitepace in front of first character
+            trimToken = trimToken.TrimStart('\"');      //remove the initial " if it is present
+            if (trimToken.Length > 0)
+                trimToken = trimToken.TrimStart();      //remove any whitespace that might have sneaked in between " and start of data
+
+            if (trimToken.Length > 0)
+                trimToken = trimToken.TrimEnd();        //remove any trailing whitespace
+            trimToken = trimToken.TrimEnd('\"');        //remove the final " if it is present
+            if (trimToken.Length > 0)
+                trimToken = trimToken.TrimEnd();        //remove any whitespace that might have sneaked in between end of data string and "
+
+            return trimToken;
         }
 
     }
