@@ -10,6 +10,7 @@ class WrecksFileReader
     private String[] headers;           //holds header tokens
     private int numberOfTokens;         //the expected number of tokens, based on a validated set of headers 
     private int lineReadErrors;         //the number of content lines that could not be validated
+    private List<String[]> allData = new List<string[]>();     //holds all the non-header data as initially read in, before parsing
 
     static void Main(string[] args)
     {
@@ -53,21 +54,18 @@ class WrecksFileReader
 
             lineReadErrors = 0;
 
-            //while ((line = reader.ReadLine()) != null)
-            for (int i = 1; i < 11; i++)
+            while ((line = reader.ReadLine()) != null)
             {
-                line = reader.ReadLine();
-
                 String[] tokens = line.Split(new char[] { '\t' });
 
-                for (int j = 0; j < tokens.Length; j++) 
+                for (int j = 0; j < tokens.Length; j++)
                 {
                     tokens[j] = TrimToken(tokens[j]);
                 }
 
                 if (!ValidateRow(tokens))
                 {
-                    Console.WriteLine("Invalid row at line " );
+                    Console.WriteLine("Invalid row at line ");
                     Console.WriteLine("Tokens found: " + tokens.Length);
                     Console.WriteLine("Empty tokens found: " + EmptyTokensList(tokens).Count);
 
@@ -77,17 +75,15 @@ class WrecksFileReader
                     }
                     lineReadErrors++;
                 }
-
-                /*
-                foreach (String val in tokens)
+                else
                 {
-                    Console.WriteLine(val);
-                }*/
-
+                    allData.Add(tokens);
+                }
             }
 
-            Console.WriteLine("Lines read in with " + lineReadErrors + " invalid lines found.");
+            Console.WriteLine(allData.Count + " lines read in with " + lineReadErrors + " invalid lines found.");
         }
+    }
 
         // finds empty tokens in an array and returns a list of their indices
         static List<int> EmptyTokensList(string[] tokens)
@@ -161,8 +157,6 @@ class WrecksFileReader
 
             return trimToken;
         }
-
-    }
 
 }
 
