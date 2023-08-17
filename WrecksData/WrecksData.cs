@@ -12,23 +12,26 @@ class MainEntry
         WrecksFileReader reader = new WrecksFileReader();
         reader.readFile("D:\\VS Projects\\AzureSQLTest\\WrecksData\\Wrecks.txt");
 
-        foreach (string token in reader.getRow(1500))
-        {
-            Console.WriteLine(token);
-        }
+        //WrecksFileParser.ParseStringsToInt(reader.getColumn(0));
 
-        foreach (string token in reader.getColumn(0))
+        Console.WriteLine("\nHeader list: ");
+        foreach (String val in reader.GetHeaders())
         {
-            Console.WriteLine(token);
+            Console.WriteLine(val);
         }
     }
 }
 
 class WrecksFileParser
 {
-    WrecksFileReader reader;        //the associated reader
 
-    public WrecksFileParser(WrecksFileReader reader) { this.reader = reader; }
+    public static void ParseStringsToInt(string[] tokens)
+    {
+        foreach (string token in tokens)
+        {
+            try { Console.WriteLine(Int32.Parse(token)); } catch (Exception e) { Console.WriteLine(e); }  //will potentially output a huge list of error messages; write breakout clause?
+        }
+    }
 
 }
 
@@ -43,7 +46,7 @@ class WrecksFileReader
     {
         //first the file needs to be read. A quick check shows that it is in a human readable, tab delimated format,
         //but it is too large to do a thorough assessment by eye. 
-        Console.WriteLine("Opening reader...\n");
+        Console.WriteLine("\nOpening reader...");
         using (StreamReader reader = new StreamReader(path))
         {
             //the first line is a header, which can be assessed for the data to be expected
@@ -53,10 +56,7 @@ class WrecksFileReader
             headers = line.Split(new char[] { '\t' });
 
             Console.WriteLine("Header tokens found: " + headers.Length);
-            Console.WriteLine("Empty tokens found: " + EmptyTokensList(headers).Count);
-
-            Console.WriteLine("\nHeader list: ");
-            foreach (String val in headers) { Console.WriteLine(val); }
+            Console.WriteLine("Empty header tokens found: " + EmptyTokensList(headers).Count);
 
             //if the header can't be validated, exit the program.
             if (!ValidateHeader(headers))
@@ -103,6 +103,8 @@ class WrecksFileReader
 
             Console.WriteLine(allData.Count + " lines read in with " + lineReadErrors + " invalid lines found.");
         }
+
+        Console.WriteLine("Closing reader.");
     }
 
     // finds empty tokens in an array and returns a list of their indices
@@ -178,16 +180,17 @@ class WrecksFileReader
         return trimToken;
     }
 
+    //returns a safe copy of a row
     public string[] getRow(int i)
     {
         if (i > -1 && i < allData.Count)
-            return allData[i];
+            return (string[])allData[i].Clone();
 
         Console.WriteLine("Invalid row index: " + i);
         return new string[0];
     }
 
-    //should be safe, row length enforced
+    //returns a safe copy of a column, without header
     public string[] getColumn(int i)
     {
         if (i > -1 && i < numberOfTokens)
@@ -195,15 +198,20 @@ class WrecksFileReader
             string[] output = new string[allData.Count];
             for (int j = 0; j < allData.Count; j++)
             {
-                output[j] = allData[j][i];
+                output[j] = allData[j][i];      //indices should be safe to use as row length enforced. Data is safe as primitive type
             } 
-
             return output;
-        }
-            
+        }            
         Console.WriteLine("Invalid column index: " + i);
         return new string[0];
     }
+
+    //returns a safe copy of the header array
+    public string[] GetHeaders()
+    {
+        return (string[])headers.Clone();
+    }
+
 
 }
 
