@@ -5,19 +5,39 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.ConstrainedExecution;
 
 
+class MainEntry
+{
+    static void Main(string[] args)
+    {
+        WrecksFileReader reader = new WrecksFileReader();
+        reader.readFile("D:\\VS Projects\\AzureSQLTest\\WrecksData\\Wrecks.txt");
+
+        foreach (string token in reader.getRow(1500))
+        {
+            Console.WriteLine(token);
+        }
+
+        foreach (string token in reader.getColumn(0))
+        {
+            Console.WriteLine(token);
+        }
+    }
+}
+
+class WrecksFileParser
+{
+    WrecksFileReader reader;        //the associated reader
+
+    public WrecksFileParser(WrecksFileReader reader) { this.reader = reader; }
+
+}
+
 class WrecksFileReader
 {
     private String[] headers;           //holds header tokens
     private int numberOfTokens;         //the expected number of tokens, based on a validated set of headers 
     private int lineReadErrors;         //the number of content lines that could not be validated
     private List<String[]> allData = new List<string[]>();     //holds all the non-header data as initially read in, before parsing
-
-    static void Main(string[] args)
-    {
-        WrecksFileReader reader = new WrecksFileReader();
-
-        reader.readFile("D:\\VS Projects\\AzureSQLTest\\WrecksData\\Wrecks.txt");
-    }
 
     public void readFile(String path)
     {
@@ -85,78 +105,105 @@ class WrecksFileReader
         }
     }
 
-        // finds empty tokens in an array and returns a list of their indices
-        static List<int> EmptyTokensList(string[] tokens)
-        {
-            List<int> output = new List<int>();
+    // finds empty tokens in an array and returns a list of their indices
+    static List<int> EmptyTokensList(string[] tokens)
+    {
+        List<int> output = new List<int>();
 
-            for (int i = 0; i < tokens.Length; i++)
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(tokens[i]))
+                output.Add(i);
+        }
+
+        return output;
+    }
+
+    //tests the header tokens for validity. 
+    //? Additional tests for duplicate headers?  
+    static bool ValidateHeader(String[] headers)
+    {
+        //if there are no headers, the header is invalid
+        if (headers.Length == 0)
+        {
+            return false;
+        }
+
+        //check for empty tokens
+        List<int> emptyHeaders = EmptyTokensList(headers);
+        if (emptyHeaders.Count > 0)
+        {
+            return false;
+        }
+
+        //all tests passed; line is validated
+        return true;
+    }
+
+    //tests a content line for validity 
+    bool ValidateRow(String[] tokens)
+    {
+        if (tokens.Length != numberOfTokens)     //if there is the wrong number of tokens the line is invalid
+        {
+            return false;
+        }
+
+        //check if all tokens are empty. Lines with at least one nonempty entry pass.
+        List<int> emptyTokens = EmptyTokensList(tokens);
+        if (emptyTokens.Count == tokens.Length)
+        {
+            return false;
+        }
+
+        //all tests passed; line is validated
+        return true;
+    }
+
+    // Trims tokens of whitespace and enclosing quotation marks
+    string TrimToken(string token)
+    {
+        String trimToken = token;
+
+        trimToken = trimToken.TrimStart();          //remove whitepace in front of first character
+        trimToken = trimToken.TrimStart('\"');      //remove the initial " if it is present
+        if (trimToken.Length > 0)
+            trimToken = trimToken.TrimStart();      //remove any whitespace that might have sneaked in between " and start of data
+
+        if (trimToken.Length > 0)
+            trimToken = trimToken.TrimEnd();        //remove any trailing whitespace
+        trimToken = trimToken.TrimEnd('\"');        //remove the final " if it is present
+        if (trimToken.Length > 0)
+            trimToken = trimToken.TrimEnd();        //remove any whitespace that might have sneaked in between end of data string and "
+
+        return trimToken;
+    }
+
+    public string[] getRow(int i)
+    {
+        if (i > -1 && i < allData.Count)
+            return allData[i];
+
+        Console.WriteLine("Invalid row index: " + i);
+        return new string[0];
+    }
+
+    //should be safe, row length enforced
+    public string[] getColumn(int i)
+    {
+        if (i > -1 && i < numberOfTokens)
+        {
+            string[] output = new string[allData.Count];
+            for (int j = 0; j < allData.Count; j++)
             {
-                if (string.IsNullOrWhiteSpace(tokens[i]))
-                    output.Add(i);
-            }
+                output[j] = allData[j][i];
+            } 
 
             return output;
         }
-
-        //tests the header tokens for validity. 
-        //? Additional tests for duplicate headers?  
-        static bool ValidateHeader(String[] headers)
-        {
-            //if there are no headers, the header is invalid
-            if (headers.Length == 0)
-            {
-                return false;
-            }
-
-            //check for empty tokens
-            List<int> emptyHeaders = EmptyTokensList(headers);
-            if (emptyHeaders.Count > 0)
-            {
-                return false;
-            }
-
-            //all tests passed; line is validated
-            return true;
-        }
-
-        //tests a content line for validity 
-        bool ValidateRow(String[] tokens)
-        {
-            if (tokens.Length != numberOfTokens)     //if there is the wrong number of tokens the line is invalid
-            {
-                return false;
-            }
-
-            //check if all tokens are empty. Lines with at least one nonempty entry pass.
-            List<int> emptyTokens = EmptyTokensList(tokens);
-            if (emptyTokens.Count == tokens.Length)
-            {
-                return false;
-            }
-
-            //all tests passed; line is validated
-            return true;
-        }
-
-        // Trims tokens of whitespace and enclosing quotation marks
-        string TrimToken(string token)
-        {
-            String trimToken = token;
-
-            trimToken = trimToken.TrimStart();          //remove whitepace in front of first character
-            trimToken = trimToken.TrimStart('\"');      //remove the initial " if it is present
-            if (trimToken.Length > 0)
-                trimToken = trimToken.TrimStart();      //remove any whitespace that might have sneaked in between " and start of data
-
-            if (trimToken.Length > 0)
-                trimToken = trimToken.TrimEnd();        //remove any trailing whitespace
-            trimToken = trimToken.TrimEnd('\"');        //remove the final " if it is present
-            if (trimToken.Length > 0)
-                trimToken = trimToken.TrimEnd();        //remove any whitespace that might have sneaked in between end of data string and "
-
-            return trimToken;
-        }
+            
+        Console.WriteLine("Invalid column index: " + i);
+        return new string[0];
+    }
 
 }
 
