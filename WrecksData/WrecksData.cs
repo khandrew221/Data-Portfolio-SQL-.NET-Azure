@@ -15,7 +15,7 @@ class MainEntry
         //WrecksFileParser.ParseStringsToInt(reader.getColumn(0));
 
         Console.WriteLine("\nHeader list: ");
-        foreach (String val in reader.GetHeaders())
+        foreach (String val in reader.GetDistictFromColumn(3))
         {
             Console.WriteLine(val);
         }
@@ -180,7 +180,7 @@ class WrecksFileReader
         return trimToken;
     }
 
-    //returns a safe copy of a row
+    //returns a safe copy of a row, or an empty array for an invalid index
     public string[] getRow(int i)
     {
         if (i > -1 && i < allData.Count)
@@ -190,7 +190,7 @@ class WrecksFileReader
         return new string[0];
     }
 
-    //returns a safe copy of a column, without header
+    //returns a safe copy of a column, without header, or an empty array for an invalid index
     public string[] getColumn(int i)
     {
         if (i > -1 && i < numberOfTokens)
@@ -212,6 +212,16 @@ class WrecksFileReader
         return (string[])headers.Clone();
     }
 
+    //returns a safe array of all distinct values in a column, or an empty array for an invalid index
+    public string[] GetDistictFromColumn(int i)
+    {
+        string[] column = getColumn(i);
+        if (column.Length != 0)
+        {
+            return column.Distinct().ToArray();
+        }
+        return new string[0];
+    }
 
 }
 
