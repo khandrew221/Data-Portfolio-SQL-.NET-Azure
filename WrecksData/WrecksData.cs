@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Diagnostics.Metrics;
+using System.Linq.Expressions;
 using System.Reflection.PortableExecutable;
 using System.Runtime.ConstrainedExecution;
 
@@ -15,16 +16,17 @@ class MainEntry
         //WrecksFileParser.ParseStringsToInt(reader.getColumn(0));
 
         Console.WriteLine("\nHeader list: ");
-        foreach (String val in reader.GetDistictFromColumn(3))
+        foreach (String val in reader.GetDistictFromColumn(4))
         {
             Console.WriteLine(val);
         }
+
+        reader.PrintReport();
     }
 }
 
 class WrecksFileParser
 {
-
     public static void ParseStringsToInt(string[] tokens)
     {
         foreach (string token in tokens)
@@ -32,7 +34,6 @@ class WrecksFileParser
             try { Console.WriteLine(Int32.Parse(token)); } catch (Exception e) { Console.WriteLine(e); }  //will potentially output a huge list of error messages; write breakout clause?
         }
     }
-
 }
 
 class WrecksFileReader
@@ -221,6 +222,37 @@ class WrecksFileReader
             return column.Distinct().ToArray();
         }
         return new string[0];
+    }
+
+
+    //prints an analysis of the data to the console
+    public void PrintReport()
+    {
+        Console.WriteLine("Data Reader Report:\n");
+        if (allData.Count > 0)
+        {
+            Console.WriteLine(headers.Length + " column headers.");
+            Console.WriteLine(headers.Distinct().Count() + " unique column headers.");
+            Console.WriteLine(allData.Count + " lines.");
+
+            //header stuck at the end because aligning tabs is hard
+            Console.WriteLine("\nColumn\tUnique Entries\tNull Entries\tNull Column\tHeader");
+
+            for (int i = 0; i < headers.Length; i++)
+            {
+                String[] columnData = getColumn(i);
+                String header = headers[i];
+                int uniqueEntries = columnData.Distinct().Count();
+                int nullEntries = EmptyTokensList(columnData).Count;
+                string nullColumn = (nullEntries == allData.Count) ? "Y" : "N";      //Y if all entries for column empty
+                Console.WriteLine(String.Format("{0}\t{1}\t\t{2}\t\t{3}\t\t{4}", i, uniqueEntries, nullEntries, nullColumn, header));
+            }
+
+        } 
+        else
+        {
+            Console.WriteLine("No data found.");
+        }
     }
 
 }
