@@ -22,6 +22,8 @@ class MainEntry
         }
 
         reader.PrintReport();
+
+        reader.Clean();
     }
 }
 
@@ -253,6 +255,93 @@ class WrecksFileReader
         {
             Console.WriteLine("No data found.");
         }
+    }
+
+    //the cleaning process for the data read in, 
+    public void Clean()
+    {
+        Console.WriteLine("\nCleaning data...");
+
+        HashSet<int> columnsToRemove = new HashSet<int>();
+        HashSet<int> rowsToRemove = new HashSet<int>();
+
+        //first, checking the data report from PrintReport(), the required number of rows and columns is present
+        //but there is no current knowledge of the cleanliness or quality of the data it contains
+
+        //The report also shows us that there are two columns with nothing but null entries, headers "classification"
+        //and "reported_year". Some checking showed that this is not a trimming error, and there really seems to be
+        //no data contained in them. Therefore, those columns are redundant and can be removed.
+
+        //Some columns contain only one distict entry, i.e. they are filled with a single data value. This is 
+        //techincally redundant, though there may be legitimate reasons for this. For these purposes, those 
+        //columns will be removed.
+
+        //Filled but redundant:
+        //horizontal_datum : WDG 2
+
+        //A function, redundantColumns(), has been written to find column indices of columns that fit these criteria
+        HashSet<int> redundantCols = RedundantColumns();
+        columnsToRemove.UnionWith(redundantCols);
+        Console.WriteLine("\nRedundant columns found: " + redundantCols.Count);
+
+        //The wreck_id column contains one null/empty value. On the assumption that this column will represent a
+        //primary key in a future database table, these should all be non-null and unique
+
+        /*
+        string[] col = getColumn(0);
+
+        for (int i = 0; i < col.Length; i++) 
+        {
+            if (String.IsNullOrWhiteSpace(col[i]))
+            {
+                Console.WriteLine("Row " + i + " is null in column " + 0);
+                foreach (string val in getRow(i))
+                {
+                    Console.WriteLine(val);
+                }
+            }
+        }*/
+
+        /*
+        foreach (String val in getColumn(0))
+        {
+            if (String.IsNullOrWhiteSpace(val))
+                Console.WriteLine("null");
+        }
+
+        foreach (String val in GetDistictFromColumn(8))
+        {
+            Console.WriteLine(val);
+        }*/
+
+        /*
+        foreach (String val in GetDistictFromColumn(8))
+        {
+            Console.WriteLine(val);
+        }
+
+        foreach (String val in getColumn(8))
+        {
+            Console.WriteLine(val);
+        }
+
+        Console.WriteLine(getColumn(8).Length);*/
+    }
+
+    //finds redundant rows and returns a list of their indices
+    //columns are redundant if they only contain a single unique entry
+    //this includes null columns, which will contain null as single unique entry
+    HashSet<int> RedundantColumns()
+    {
+        HashSet<int> output = new HashSet<int>();
+        for (int i = 0; i < allData.Count; i++)
+        {
+            if (allData[i].Distinct().Count() == 1)
+            {
+                output.Add(i);
+            }
+        }
+        return output;
     }
 
 }
