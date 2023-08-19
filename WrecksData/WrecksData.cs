@@ -284,8 +284,31 @@ class WrecksFileReader
         columnsToRemove.UnionWith(redundantCols);
         Console.WriteLine("\nRedundant columns found: " + redundantCols.Count);
 
-        //The wreck_id column contains one null/empty value. On the assumption that this column will represent a
-        //primary key in a future database table, these should all be non-null and unique
+
+        //The wreck_id column contains one null/empty value, and several duplicated values. On the assumption that this
+        //column will represent a primary key in a future database table, these should all be non-null and unique
+        //The column needs to be investigated.
+
+        //The following code (commented out as its print output will not be part of the cleaning report) will find and
+        //show the contents of all rows with a null wreck_id value
+
+        Console.WriteLine("\nContents of rows with null value in column 0:");
+        foreach (int i in LinesWithNullInColumn(0))
+        {
+            Console.WriteLine("Row " + i);
+            foreach (string val in getRow(i))
+            {
+                Console.WriteLine(val);
+            }
+        }
+
+        //The row index is 97401, and it contains several valid looking content entries. There are several paths from here.
+        //The first would be to check a previous or parallel record to see if this content can be matched to a wreck_id.
+        //Since this data is not available, checks against existing rows could be performed to see if this is a duplicate,
+        //partial duplicate, or hybrid of existing data. A full investigation of this would be costly in time and processing,
+        //but a potential "rule of thumb" shortcut may exist. The position column is almost fully unique at 98880 entries. 
+        //It is not certain, but it might be supposed that it is unlikely for two wrecks to share a location. If we find the 
+        //location in a suspect row elsewhere, it stands as a good clue that the data is duplicated from there.
 
         /*
         string[] col = getColumn(0);
@@ -341,6 +364,40 @@ class WrecksFileReader
                 output.Add(i);
             }
         }
+        return output;
+    }
+
+    HashSet<int> LinesWithValueInColumn(String s, int colInd)
+    {
+        HashSet<int> output = new HashSet<int>();
+
+        string[] col = getColumn(colInd);
+
+        for (int i = 0; i < col.Length; i++)
+        {
+            if (col[i].Equals(s))
+            {
+                output.Add(i);
+            }
+        }
+
+        return output;
+    }
+
+    HashSet<int> LinesWithNullInColumn(int colInd)
+    {
+        HashSet<int> output = new HashSet<int>();
+
+        string[] col = getColumn(colInd);
+
+        for (int i = 0; i < col.Length; i++)
+        {
+            if(String.IsNullOrWhiteSpace(col[i]))
+            {
+                output.Add(i);
+            }
+        }
+
         return output;
     }
 
