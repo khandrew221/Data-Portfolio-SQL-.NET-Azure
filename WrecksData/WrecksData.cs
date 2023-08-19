@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics.Metrics;
 using System.Linq.Expressions;
 using System.Reflection.PortableExecutable;
@@ -289,6 +291,8 @@ class WrecksFileReader
         //column will represent a primary key in a future database table, these should all be non-null and unique
         //The column needs to be investigated.
 
+        PrintColumnDuplicatesReport(0);
+
         //The following code (commented out as its print output will not be part of the cleaning report) will find and
         //show the contents of all rows with a null wreck_id value
 
@@ -309,6 +313,8 @@ class WrecksFileReader
         //but a potential "rule of thumb" shortcut may exist. The position column is almost fully unique at 98880 entries. 
         //It is not certain, but it might be supposed that it is unlikely for two wrecks to share a location. If we find the 
         //location in a suspect row elsewhere, it stands as a good clue that the data is duplicated from there.
+
+
 
         /*
         string[] col = getColumn(0);
@@ -399,6 +405,33 @@ class WrecksFileReader
         }
 
         return output;
+    }
+
+    //will return a map of all values duplicated in a column and how many times they are duplicated
+    public Dictionary<string, int> GetDuplicatesFromColumn(int i)
+    {
+        Dictionary<string, int> output = new Dictionary<string, int>();
+        List<string> column = getColumn(i).ToList<string>();
+
+        if (column.Count != 0)
+        {
+            output = column.GroupBy(x => x).Where(g => g.Count() > 1).ToDictionary(x => x.Key, x => x.Count());
+            return output;
+        }
+        return output;
+    }
+
+    public void PrintColumnDuplicatesReport(int i)
+    {
+        Dictionary<string, int> duplicatesMap = GetDuplicatesFromColumn(0);
+        if (duplicatesMap.Count != 0)
+        {
+            Console.WriteLine("\nColumn " + i + " duplicates report:");
+            foreach (string s in duplicatesMap.Keys)
+            {
+                Console.WriteLine(s + ": " + duplicatesMap[s]);
+            }
+        }
     }
 
 }
