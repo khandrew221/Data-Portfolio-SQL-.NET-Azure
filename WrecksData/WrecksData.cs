@@ -260,7 +260,7 @@ class WrecksFileReader
         }
     }
 
-    //the cleaning process for the data read in, 
+    //the cleaning process for the data read in
     public void Clean()
     {
         Console.WriteLine("\nCleaning data...");
@@ -297,7 +297,9 @@ class WrecksFileReader
         //all duplicates consist of doubled entries. Each can be checked to see how their data matches up.
         // 
 
-        RowDifferencesReport(LinesWithValueInColumn("99955", 0).ToList());
+        /*
+        RowDifferencesReport(LinesWithValueInColumn("12490", 0).ToList());
+        */
 
 
         //wreck_id values to check: 12490, 12486, 48548, 83361, 6899, 34895, 34888, 53957, 1258, 1276, 1255, 99955, 99368, 101604, 37379, 37459
@@ -320,10 +322,38 @@ class WrecksFileReader
         //37459, rows 99294 and 99296: slightly different locational data, row 99294 amended a few days after row 99296
 
 
+        //the discovery of entries for distinct parts of wrecks under the same wreck_id challenges the assumption that this field can be used as
+        //a unique identifier for rows. However, there are also duplicates that appear to have been made in error (as part of an update process?)
+
+        //How to handle these duplicates would depend on final purpose and individual double checking of data. A simplified set of recommendations, 
+        //designed to maximise available data and provide unique wreck_ids for each entry at the potential cost of best available locational data:
+
+        //where duplicates differ in date, keep only the most recent (removing rows 96519, 97308, 96504, 96514, 99289, 99296)
+        rowsToRemove.Add(96519);
+        rowsToRemove.Add(97308);
+        rowsToRemove.Add(96504);
+        rowsToRemove.Add(96514);
+        rowsToRemove.Add(99289);
+        rowsToRemove.Add(99296);
+
+        //where one copy contains more data, assume it is more up to date and remove the other (removing rows 8336, 8339, 87541, 87295, 96518)
+        rowsToRemove.Add(8336);
+        rowsToRemove.Add(8339);
+        rowsToRemove.Add(87541);
+        rowsToRemove.Add(87295);
+        rowsToRemove.Add(96518);
+
+        //where two rows refer to different parts of the same wreck, assign a new unique wreck_id to one of them
+        AssignValue("833611", 43865, 0);
+        AssignValue("689900", 70980, 0);
+        AssignValue("539570", 87623, 0);
+
+        //This leaves only rows 97362 and 97371, where best data accuracy cannot be determined between them. For example purposes, row 97371 will be
+        //removed
+        rowsToRemove.Add(97371);
 
 
-
-
+        //now we need to deal with the entry with no wreck_id data. 
         //The following code (commented out as its print output will not be part of the cleaning report) will find and
         //show the contents of all rows with a null wreck_id value
 
@@ -341,10 +371,14 @@ class WrecksFileReader
         //The row index is 97401, and it contains several valid looking content entries. There are several paths from here.
         //The first would be to check a previous or parallel record to see if this content can be matched to a wreck_id.
         //Since this data is not available, checks against existing rows could be performed to see if this is a duplicate,
-        //partial duplicate, or hybrid of existing data. A full investigation of this would be costly in time and processing,
-        //but a potential "rule of thumb" shortcut may exist. The position column is almost fully unique at 98880 entries. 
-        //It is not certain, but it might be supposed that it is unlikely for two wrecks to share a location. If we find the 
-        //location in a suspect row elsewhere, it stands as a good clue that the data is duplicated from there.
+        //partial duplicate, or hybrid of existing data. A full investigation of this would be costly in time and processing.
+        //Ultimately, the row could be removed or assigned a new wreck_id, depending on the outcomes of investigation.
+        //As a current shortcut, it will be assigned a new wreck_id value.
+        AssignValue("0", 97401, 0);
+
+        //This should conclude the process of making sure that all wreck_id entries are unique and non-null.
+
+
 
 
 
@@ -529,6 +563,21 @@ class WrecksFileReader
         else
         {
             Console.WriteLine("No differences: only " + rowInds.Count + " row(s) to compare.");
+        }
+    }
+
+    //tries to assign a value to a position in allData. Returns true if successful.
+    private bool AssignValue(string val, int row, int column)
+    {
+        try
+        {
+            allData[row][column] = val;
+            return true;
+        }
+        catch (Exception e) 
+        {
+            Console.WriteLine("Assign value failed: " + e.Message);
+            return false;
         }
     }
 
