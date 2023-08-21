@@ -295,6 +295,10 @@ class WrecksFileReader
         PrintColumnDuplicatesReport(0);
 
         //all duplicates consist of doubled entries. Each can be checked to see how their data matches up.
+        // 
+
+        RowDifferencesReport(LinesWithValueInColumn("99955", 0).ToList());
+
 
         //wreck_id values to check: 12490, 12486, 48548, 83361, 6899, 34895, 34888, 53957, 1258, 1276, 1255, 99955, 99368, 101604, 37379, 37459
 
@@ -316,16 +320,7 @@ class WrecksFileReader
         //37459, rows 99294 and 99296: slightly different locational data, row 99294 amended a few days after row 99296
 
 
-        List<int> doubledLine = LinesWithValueInColumn("37459", 0).ToList();
 
-        if (doubledLine.Count == 2)
-        {
-            RowDifferencesReport(doubledLine[0], doubledLine[1]);
-        }
-        else
-        {
-            Console.WriteLine("Not double: " + doubledLine.Count + " matches found.");
-        }
 
 
 
@@ -494,27 +489,46 @@ class WrecksFileReader
         return output;
     }
 
-
-    public void RowDifferencesReport(int rowInd1, int rowInd2)
+    public void RowDifferencesReport(List<int>rowInds)
     {
-        string[] row1 = getRow(rowInd1);
-        string[] row2 = getRow(rowInd2);
-        List<int> matches = RowMatches(row1, row2);       //safe for bad indices
 
-        Console.WriteLine(String.Format("\nDifferences between rows {0} and {1}", rowInd1, rowInd2));
-        if (matches.Count != 0)
+        if (rowInds.Count > 1) 
         {
-            for (int i = 0; i < numberOfTokens; i++)
+            List<string[]> rows = new List<string[]>();
+
+            foreach (int i in rowInds)
             {
-                if (!matches.Contains(i)) 
-                {
-                    Console.WriteLine("Column " + i + ": " + row1[i] + ", " + row2[i]);
-                }
+                string[] row = getRow(i);
+                rows.Add(row);
             }
 
-        } else
+            Console.WriteLine(String.Format("\nDifferences between rows " + String.Join(", ", rowInds)));
+
+            int diffs = 0;
+            for (int i = 0; i < numberOfTokens; i++)    //assumes correct number of tokens, should be okay with getRow()
+            {
+                //all tokens from column
+                List<string> entries = new List<string>();
+                foreach (string[] tokens in rows)
+                {
+                    entries.Add(tokens[i]);
+
+                    if (entries.Distinct().Count() > 1)     //more than one distinct entry: show differences
+                    {
+                        Console.WriteLine("Column " + i + ": " + String.Join(", ", entries));
+                        diffs++;
+                    }
+                }
+            }
+            //no differences message
+            if (diffs == 0)
+            {
+                Console.WriteLine("No differences found.");
+            }
+        } 
+        else
         {
-            Console.WriteLine("No differences found");
+            Console.WriteLine("No differences: only " + rowInds.Count + " row(s) to compare.");
         }
     }
 
