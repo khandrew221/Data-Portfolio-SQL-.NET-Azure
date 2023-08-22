@@ -297,9 +297,9 @@ class WrecksFileReader
         //all duplicates consist of doubled entries. Each can be checked to see how their data matches up.
         // 
 
-        /*
+        
         RowDifferencesReport(LinesWithValueInColumn("12490", 0).ToList());
-        */
+        
 
 
         //wreck_id values to check: 12490, 12486, 48548, 83361, 6899, 34895, 34888, 53957, 1258, 1276, 1255, 99955, 99368, 101604, 37379, 37459
@@ -336,9 +336,10 @@ class WrecksFileReader
         rowsToRemove.Add(99289);
         rowsToRemove.Add(99296);
 
-        //where one copy contains more data, assume it is more up to date and remove the other (removing rows 8336, 8339, 87541, 87295, 96518)
-        rowsToRemove.Add(8336);
-        rowsToRemove.Add(8339);
+        //where one copy contains more data, assume it is more up to date and remove the other (removing rows 8336, 8339, 30958, 87541, 87295, 96518)
+        rowsToRemove.Add(8366);
+        rowsToRemove.Add(8399);
+        rowsToRemove.Add(30958);
         rowsToRemove.Add(87541);
         rowsToRemove.Add(87295);
         rowsToRemove.Add(96518);
@@ -378,7 +379,19 @@ class WrecksFileReader
 
         //This should conclude the process of making sure that all wreck_id entries are unique and non-null.
 
+        //running a check on the clean data should now produce no duplicates or nulls in column 0
+        
+        /*
+        ReplaceWithClean(columnsToRemove, rowsToRemove);
 
+        Console.WriteLine("\nCleaned data:\n");
+
+        PrintColumnDuplicatesReport(0);
+        if (LinesWithNullInColumn(0).Count > 0)
+            Console.WriteLine("Nulls found in column 0.");
+        else
+            Console.WriteLine("No nulls found in column 0.");
+        */
 
 
 
@@ -497,6 +510,9 @@ class WrecksFileReader
             {
                 Console.WriteLine(s + ": " + duplicatesMap[s]);
             }
+        } else
+        {
+            Console.WriteLine("Warning: Map of duplicates empty.");
         }
     }
 
@@ -567,6 +583,7 @@ class WrecksFileReader
     }
 
     //tries to assign a value to a position in allData. Returns true if successful.
+    //WARNING: overwrites original read in data!
     private bool AssignValue(string val, int row, int column)
     {
         try
@@ -579,6 +596,32 @@ class WrecksFileReader
             Console.WriteLine("Assign value failed: " + e.Message);
             return false;
         }
+    }
+
+
+    //currently only removes rows and columns
+    //WARNING: overwrites original read in data, changing row/column numbering!
+    private void ReplaceWithClean(HashSet<int> columnsToRemove, HashSet<int> rowsToRemove)
+    {
+        List<String[]> cleanAllData = new List<string[]>();
+
+        for (int i = 0; i < allData.Count; i++) //iterate all original rows
+        {
+            if (!rowsToRemove.Contains(i)) //skip rows to remove 
+            {
+                //array size less by the amount of columns to remove
+                string[] tokens = new string[allData[i].Length - columnsToRemove.Count];
+                for (int j = 0; j < numberOfTokens; j++) //iterate all original columns
+                {
+                    if (!columnsToRemove.Contains(j)) // /skip columns to remove 
+                    {
+                        tokens[j] = allData[i][j];
+                    }
+                }
+                cleanAllData.Add(tokens);
+            }
+        }
+        allData = cleanAllData;
     }
 
 }
