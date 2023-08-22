@@ -394,6 +394,20 @@ class WrecksFileReader
         */
 
 
+
+        /*
+        ReplaceWithClean(columnsToRemove, rowsToRemove);
+
+        Console.WriteLine("\nCleaned data:\n");
+
+        PrintColumnDuplicatesReport(0);
+        if (LinesWithNullInColumn(0).Count > 0)
+            Console.WriteLine("Nulls found in column 0.");
+        else
+            Console.WriteLine("No nulls found in column 0.");
+        */
+
+
     }
 
     //finds redundant rows and returns a list of their indices
