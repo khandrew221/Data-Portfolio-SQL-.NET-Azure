@@ -394,8 +394,8 @@ class WrecksFileReader
             Console.WriteLine("Nulls found in column 0.");
         else
             Console.WriteLine("No nulls found in column 0.");
-      
 
+        PrintReport();
     }
 
     //finds redundant rows and returns a list of their indices
@@ -404,9 +404,10 @@ class WrecksFileReader
     HashSet<int> RedundantColumns()
     {
         HashSet<int> output = new HashSet<int>();
-        for (int i = 0; i < allData.Count; i++)
+        for (int i = 0; i < numberOfTokens; i++)
         {
-            if (allData[i].Distinct().Count() == 1)
+            string[] columnContents = getColumn(i);
+            if (columnContents.Distinct().Count() == 1)
             {
                 output.Add(i);
             }
@@ -567,32 +568,44 @@ class WrecksFileReader
     private void ReplaceWithClean(HashSet<int> columnsToRemove, HashSet<int> rowsToRemove, HashSet<Tuple<int, int, string>> dataAmendments)
     {
         List<String[]> cleanAllData = new List<string[]>();
+        List<string> newHeaders = new List<string>();
 
         for (int i = 0; i < allData.Count; i++) //iterate all original rows
         {
             if (!rowsToRemove.Contains(i)) //skip rows to remove 
             {
-                //array size less by the amount of columns to remove
-                string[] tokens = new string[allData[i].Length - columnsToRemove.Count];
+                List<string> tokens = new List<string>();
                 for (int j = 0; j < numberOfTokens; j++) //iterate all original columns
                 {
                     if (!columnsToRemove.Contains(j)) // /skip columns to remove 
                     {
-                        tokens[j] = allData[i][j];
-                        //check against amend list. Might be a more efficient way?
+                        if (i == 0)
+                        {
+                            newHeaders.Add(headers[j]); //if the column is not to be removed, and it's the first row (to avoid a header added once per row), add the header to the new header list
+                        }
+                        string value = allData[i][j]; //get the value at row and column
+                        //check against amend set. Might be a more efficient way?
                         foreach (var t in dataAmendments)
                         {
                             if (t.Item1 == i && t.Item2 == j)
                             {
-                                tokens[j] = t.Item3;
+                                value = t.Item3;  //amend value if found in amend set
                             }
-                        } 
+                        }
+                        tokens.Add(value); //add the final value to the new tokens list
                     }
                 }
-                cleanAllData.Add(tokens);
+                cleanAllData.Add(tokens.ToArray());
             }
         }
         allData = cleanAllData;
+
+        //clean metadata
+        //change number of expected tokens in line
+        numberOfTokens -= columnsToRemove.Count;
+
+        //replace header list
+        headers = newHeaders.ToArray();
     }
 
 }
