@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection.PortableExecutable;
 using System.Runtime.ConstrainedExecution;
 using System.Text.RegularExpressions;
-
+using System.Xml.Serialization;
 
 class MainEntry
 {
@@ -267,6 +267,8 @@ class WrecksFileReader
 
         HashSet<int> columnsToRemove = new HashSet<int>();
         HashSet<int> rowsToRemove = new HashSet<int>();
+        HashSet<Tuple< int, int, string>> dataAmendments = new HashSet<Tuple<int, int, string>>();  //row index, column index, replacement data
+
 
         //first, checking the data report from PrintReport(), the required number of rows and columns is present
         //but there is no current knowledge of the cleanliness or quality of the data it contains
@@ -345,9 +347,10 @@ class WrecksFileReader
         rowsToRemove.Add(96518);
 
         //where two rows refer to different parts of the same wreck, assign a new unique wreck_id to one of them
-        AssignValue("833611", 43865, 0);
-        AssignValue("689900", 70980, 0);
-        AssignValue("539570", 87623, 0);
+
+        dataAmendments.Add(Tuple.Create(43865, 0, "833611"));
+        dataAmendments.Add(Tuple.Create(70980, 0, "689900"));
+        dataAmendments.Add(Tuple.Create(87623, 0, "539570"));
 
         //This leaves only rows 97362 and 97371, where best data accuracy cannot be determined between them. For example purposes, row 97371 will be
         //removed
@@ -375,14 +378,14 @@ class WrecksFileReader
         //partial duplicate, or hybrid of existing data. A full investigation of this would be costly in time and processing.
         //Ultimately, the row could be removed or assigned a new wreck_id, depending on the outcomes of investigation.
         //As a current shortcut, it will be assigned a new wreck_id value.
-        AssignValue("0", 97401, 0);
+        dataAmendments.Add(Tuple.Create(97401, 0, "0"));
 
         //This should conclude the process of making sure that all wreck_id entries are unique and non-null.
 
         //running a check on the clean data should now produce no duplicates or nulls in column 0
         
-        /*
-        ReplaceWithClean(columnsToRemove, rowsToRemove);
+        
+        ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
 
         Console.WriteLine("\nCleaned data:\n");
 
@@ -391,22 +394,7 @@ class WrecksFileReader
             Console.WriteLine("Nulls found in column 0.");
         else
             Console.WriteLine("No nulls found in column 0.");
-        */
-
-
-
-        /*
-        ReplaceWithClean(columnsToRemove, rowsToRemove);
-
-        Console.WriteLine("\nCleaned data:\n");
-
-        PrintColumnDuplicatesReport(0);
-        if (LinesWithNullInColumn(0).Count > 0)
-            Console.WriteLine("Nulls found in column 0.");
-        else
-            Console.WriteLine("No nulls found in column 0.");
-        */
-
+      
 
     }
 
@@ -558,6 +546,7 @@ class WrecksFileReader
 
     //tries to assign a value to a position in allData. Returns true if successful.
     //WARNING: overwrites original read in data!
+    //REDUNDANT
     private bool AssignValue(string val, int row, int column)
     {
         try
@@ -575,7 +564,7 @@ class WrecksFileReader
 
     //currently only removes rows and columns
     //WARNING: overwrites original read in data, changing row/column numbering!
-    private void ReplaceWithClean(HashSet<int> columnsToRemove, HashSet<int> rowsToRemove)
+    private void ReplaceWithClean(HashSet<int> columnsToRemove, HashSet<int> rowsToRemove, HashSet<Tuple<int, int, string>> dataAmendments)
     {
         List<String[]> cleanAllData = new List<string[]>();
 
@@ -590,6 +579,14 @@ class WrecksFileReader
                     if (!columnsToRemove.Contains(j)) // /skip columns to remove 
                     {
                         tokens[j] = allData[i][j];
+                        //check against amend list. Might be a more efficient way?
+                        foreach (var t in dataAmendments)
+                        {
+                            if (t.Item1 == i && t.Item2 == j)
+                            {
+                                tokens[j] = t.Item3;
+                            }
+                        } 
                     }
                 }
                 cleanAllData.Add(tokens);
