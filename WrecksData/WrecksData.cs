@@ -465,7 +465,7 @@ class WrecksFileReader
 
     public void PrintColumnDuplicatesReport(int i)
     {
-        Dictionary<string, int> duplicatesMap = GetDuplicatesFromColumn(0);
+        Dictionary<string, int> duplicatesMap = GetDuplicatesFromColumn(i);
         if (duplicatesMap.Count != 0)
         {
             Console.WriteLine("\nColumn " + i + " duplicates report:");
