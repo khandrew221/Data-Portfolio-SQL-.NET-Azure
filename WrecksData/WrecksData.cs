@@ -383,8 +383,8 @@ class WrecksFileReader
         //This should conclude the process of making sure that all wreck_id entries are unique and non-null.
 
         //running a check on the clean data should now produce no duplicates or nulls in column 0
-        
-        
+
+        /*
         ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
 
         Console.WriteLine("\nCleaned data:\n");
@@ -395,7 +395,24 @@ class WrecksFileReader
         else
             Console.WriteLine("No nulls found in column 0.");
 
-        PrintReport();
+        PrintReport();*/
+
+        //format of all the wreck_id entries has still not been checked. They look like they should parse to an int value,
+        //so that can be tried:
+
+        List<int> output = TestParsableToInt(getColumn(0));
+
+        Console.WriteLine("Unparseable: " + output.Count);
+        foreach (int row in output)
+        {
+            Console.WriteLine(row);
+        }
+
+        //the results show only one value cannot be parsed to an int, at row 97401: the row with the null entry. This should 
+        //be fixed when the data cleaning process is run, so there seem to be no other issues for now.  
+
+
+
     }
 
     //finds redundant rows and returns a list of their indices
@@ -606,6 +623,23 @@ class WrecksFileReader
 
         //replace header list
         headers = newHeaders.ToArray();
+    }
+
+
+    //returns a list of indices where parsing to int fails
+    List<int> TestParsableToInt(string[] tokens)
+    {
+        List<int> output = new List<int>();
+        int o;
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (!int.TryParse(tokens[i], out o))     //only testing if will parse, output value will not be used
+            {
+                output.Add(i);
+            }
+        }
+        return output;
     }
 
 }
