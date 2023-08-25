@@ -18,15 +18,28 @@ class MainEntry
 
         //WrecksFileParser.ParseStringsToInt(reader.getColumn(0));
 
-        Console.WriteLine("\nHeader list: ");
-        foreach (String val in reader.GetDistictFromColumn(4))
+        
+        Console.WriteLine("\nContent list: ");
+        foreach (String val in reader.GetDistictFromColumn(49))
         {
             Console.WriteLine(val);
         }
 
+        /*
+        Console.WriteLine("\nContent list: ");
+        foreach (String val in reader.GetHeaders())
+        {
+            Console.WriteLine(val);
+        }*/
+
+       
         reader.PrintReport();
 
-        reader.Clean();
+
+        /*
+       reader.Clean();
+
+       reader.PrintReport();*/
     }
 }
 
@@ -233,7 +246,7 @@ class WrecksFileReader
     //prints an analysis of the data to the console
     public void PrintReport()
     {
-        Console.WriteLine("Data Reader Report:\n");
+        Console.WriteLine("\nData Reader Report:\n");
         if (allData.Count > 0)
         {
             Console.WriteLine(headers.Length + " column headers.");
@@ -299,8 +312,7 @@ class WrecksFileReader
         //all duplicates consist of doubled entries. Each can be checked to see how their data matches up.
         // 
 
-        
-        RowDifferencesReport(LinesWithValueInColumn("12490", 0).ToList());
+        //RowDifferencesReport(LinesWithValueInColumn("12490", 0).ToList());
         
 
 
@@ -412,7 +424,62 @@ class WrecksFileReader
         //be fixed when the data cleaning process is run, so there seem to be no other issues for now.  
 
 
+        //Taking a preliminary look at the kind of data in the other columns:
 
+        //wreck_id                      handled above 
+        //wreck_category                enum type in 5 strings, plus null 
+        //obstruction_category          enum type plus null. A couple of issues in capitalisation e.g. "Foul ground" / "foul ground"
+        //status                        enum type plus null. 
+        //classification                empty; removed above
+        //position                      Latitude/Longitude in a standard format
+        //latitude                      latitude component of above
+        //longitude                     longitude component of above
+        //horizontal_datum              single entry, "WGD 2", in all columns. removed above.
+        //limits                        unknown numerical data, plus a lot of nulls. Surprisingly small selection of entries, clearly many repeats. Futher investigation required. 
+        //position_method               enum type plus null. 
+        //depth                         float parsable, inc null
+        //height                        float parsable, inc null 
+        //depth_method                  strings plus null. List of enums?
+        //depth_quality                 strings plus null. Enum/list of enums?
+        //depth_accuracy                float parsable, inc null
+        //water_depth                   int parsable, inc null
+        //water_level_effect            enum type plus null. A couple of issues in capitalisation
+        //vertical_datum                enum type plus null.
+        //reported_year                 empty; removed above
+        //name                          string
+        //type                          enum type plus null.
+        //flag                          string representing a country, in various formats
+        //length                        float parsable, inc null 
+        //width                         float parsable, inc null 
+        //draught                       float parsable, inc null
+        //sonar_length                  float parsable, inc null
+        //sonar_width                   float parsable, inc null
+        //shadow_height                 float parsable, inc null
+        //orientation                   float parsable, inc null, in degrees
+        //tonnage                       int parsable, inc null
+        //tonnage_type                  enum type plus null.
+        //cargo                         string, or concievably enum list
+        //conspic_visual                enum (2 types), plus null
+        //conspic_radar                 enum (3 types), plus null
+        //date_sunk                     date in YYYYMMDD format, plus null
+        //non_sub_contact               two values, null or 1, very rarely included
+        //bottom_texture                mix of human readable string and list of ints(?). Futher investigation required.
+        //scour_dimensions              numerical data in what seems to be a specific format. includes null and UNKNOWN string. Futher investigation required.
+        //debris_field                  mix of human readable string and purely numeric. Futher investigation required.
+        //original_sensor               enum type plus null. 
+        //last_sensor                   enum type plus null. 
+        //original_detection_year       year/dates in multiple formats, inc null and UNKNOWN string
+        //last_detection_year           year/dates in multiple formats, inc null and UNKNOWN string
+        //original_source               enum or string
+        //markers                       string
+        //circumstances_of_loss         string (long)
+        //surveying_details             string (long)
+        //general_comments              string
+        //last_amended_date             date in YYYYMMDD format, plus null
+
+
+        ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
+        Console.WriteLine("\nData clean applied.");
     }
 
     //finds redundant rows and returns a list of their indices
