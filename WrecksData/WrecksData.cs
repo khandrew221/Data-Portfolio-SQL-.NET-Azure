@@ -18,12 +18,12 @@ class MainEntry
 
         //WrecksFileParser.ParseStringsToInt(reader.getColumn(0));
 
-        
+        /*
         Console.WriteLine("\nContent list: ");
         foreach (String val in reader.GetDistictFromColumn(49))
         {
             Console.WriteLine(val);
-        }
+        }*/
 
         /*
         Console.WriteLine("\nContent list: ");
@@ -35,11 +35,9 @@ class MainEntry
        
         reader.PrintReport();
 
-
-        /*
        reader.Clean();
 
-       reader.PrintReport();*/
+       reader.PrintReport();
     }
 }
 
@@ -412,7 +410,7 @@ class WrecksFileReader
         //format of all the wreck_id entries has still not been checked. They look like they should parse to an int value,
         //so that can be tried:
 
-        List<int> output = TestParsableToInt(getColumn(0));
+        List<int> output = TestParsableToInt(getColumn(0), false);
 
         Console.WriteLine("Unparseable: " + output.Count);
         foreach (int row in output)
@@ -476,6 +474,15 @@ class WrecksFileReader
         //surveying_details             string (long)
         //general_comments              string
         //last_amended_date             date in YYYYMMDD format, plus null
+
+
+        output = TestParsableToInt(getColumn(16), true);
+
+        Console.WriteLine("Unparseable: " + output.Count);
+        foreach (int row in output)
+        {
+            Console.WriteLine(row);
+        }
 
 
         ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
@@ -694,7 +701,7 @@ class WrecksFileReader
 
 
     //returns a list of indices where parsing to int fails
-    List<int> TestParsableToInt(string[] tokens)
+    List<int> TestParsableToInt(string[] tokens, bool allowNull)
     {
         List<int> output = new List<int>();
         int o;
@@ -703,7 +710,8 @@ class WrecksFileReader
         {
             if (!int.TryParse(tokens[i], out o))     //only testing if will parse, output value will not be used
             {
-                output.Add(i);
+                if (!allowNull || (allowNull && !String.IsNullOrEmpty(tokens[i])))   //if allowing null, only add if non-null 
+                    output.Add(i);
             }
         }
         return output;
