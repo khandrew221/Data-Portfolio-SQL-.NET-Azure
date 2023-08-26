@@ -430,31 +430,31 @@ class WrecksFileReader
         //status                        enum type plus null. 
         //classification                empty; removed above
         //position                      Latitude/Longitude in a standard format
-        //latitude                      latitude component of above
+        //latitude                      latitude component of above 
         //longitude                     longitude component of above
         //horizontal_datum              single entry, "WGD 2", in all columns. removed above.
         //limits                        unknown numerical data, plus a lot of nulls. Surprisingly small selection of entries, clearly many repeats. Futher investigation required. 
         //position_method               enum type plus null. 
-        //depth                         float parsable, inc null
-        //height                        float parsable, inc null 
+        //depth                         float parsable, inc null  (TESTED, passed)
+        //height                        float parsable, inc null   (TESTED, passed)
         //depth_method                  strings plus null. List of enums?
         //depth_quality                 strings plus null. Enum/list of enums?
         //depth_accuracy                float parsable, inc null
-        //water_depth                   int parsable, inc null
+        //water_depth                   int parsable, inc null (TESTED, passed)
         //water_level_effect            enum type plus null. A couple of issues in capitalisation
         //vertical_datum                enum type plus null.
         //reported_year                 empty; removed above
         //name                          string
         //type                          enum type plus null.
         //flag                          string representing a country, in various formats
-        //length                        float parsable, inc null 
-        //width                         float parsable, inc null 
-        //draught                       float parsable, inc null
-        //sonar_length                  float parsable, inc null
-        //sonar_width                   float parsable, inc null
-        //shadow_height                 float parsable, inc null
-        //orientation                   float parsable, inc null, in degrees
-        //tonnage                       int parsable, inc null
+        //length                        float parsable, inc null (TESTED, passed)
+        //width                         float parsable, inc null  (TESTED, passed)
+        //draught                       float parsable, inc null (TESTED, passed)
+        //sonar_length                  float parsable, inc null (TESTED, passed)
+        //sonar_width                   float parsable, inc null (TESTED, passed)
+        //shadow_height                 float parsable, inc null (TESTED, passed)
+        //orientation                   float parsable, inc null, in degrees (TESTED, passed for float, need to test degrees validity)
+        //tonnage                       int parsable, inc null (TESTED, passed)
         //tonnage_type                  enum type plus null.
         //cargo                         string, or concievably enum list
         //conspic_visual                enum (2 types), plus null
@@ -476,13 +476,30 @@ class WrecksFileReader
         //last_amended_date             date in YYYYMMDD format, plus null
 
 
-        output = TestParsableToInt(getColumn(16), true);
+        //basic numerical types can be checked to see if all entries parse. Columns 11, 12, 15, and 23-30 tested with respective data type and passed
+        //with no non-null unparsable entries. Column (orientation) has not been tested for degree style values (0-360 or -180 to 180)
+
+        //
+        /*
+        output = TestParsableToInt(getColumn(30), true);
 
         Console.WriteLine("Unparseable: " + output.Count);
         foreach (int row in output)
         {
             Console.WriteLine(row);
-        }
+        }*/
+
+        output = TestParsableToFloat(getColumn(15), true);
+
+
+        Console.WriteLine("Unparseable: " + output.Count);
+        
+        /*
+        foreach (int row in output)
+        {
+            //Console.WriteLine(row);
+            Console.WriteLine(getColumn(23)[row]);
+        }*/
 
 
         ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
@@ -709,6 +726,23 @@ class WrecksFileReader
         for (int i = 0; i < tokens.Length; i++)
         {
             if (!int.TryParse(tokens[i], out o))     //only testing if will parse, output value will not be used
+            {
+                if (!allowNull || (allowNull && !String.IsNullOrEmpty(tokens[i])))   //if allowing null, only add if non-null 
+                    output.Add(i);
+            }
+        }
+        return output;
+    }
+
+    //returns a list of indices where parsing to int fails
+    List<int> TestParsableToFloat(string[] tokens, bool allowNull)
+    {
+        List<int> output = new List<int>();
+        float o;
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (!float.TryParse(tokens[i], out o))     //only testing if will parse, output value will not be used
             {
                 if (!allowNull || (allowNull && !String.IsNullOrEmpty(tokens[i])))   //if allowing null, only add if non-null 
                     output.Add(i);
