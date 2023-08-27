@@ -33,3 +33,13 @@ Doubled wreck_id entries:
 - 101604, rows 97362 and 97371: slightly different locational data
 - 37379, rows 99289 and 99290: locational and misc differences. Different last_detection_year, row 99290 more recent
 - 37459, rows 99294 and 99296: slightly different locational data, row 99294 amended a few days after row 99296
+
+Possible bad dates in original_detection_year & last_detection_year eg (in last_detection_year):
+- line 558: 20161611 (day/month reversal?)
+- line 57068: 19681984 (two years 1968/1984?)
+- line 59507: 201501115 (too many digits?)
+- line 62809: 19836 (too many digits / badly formatted yyyyMM for 198606 ?)
+- line 89736: 11/06/2022 (non-standard but parseable format)
+- line 92883: 13.01.2022 (non-standard but parseaable format)
+
+Possiibility of yyyyMMdd vs yyyyddMM confusion is concerning, as it impossible to verify in all cases where dd < 13 without external reference
