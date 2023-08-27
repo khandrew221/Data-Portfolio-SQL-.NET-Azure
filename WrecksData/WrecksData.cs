@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection.PortableExecutable;
 using System.Runtime.ConstrainedExecution;
@@ -424,56 +425,56 @@ class WrecksFileReader
 
         //Taking a preliminary look at the kind of data in the other columns:
 
-        //wreck_id                      handled above 
-        //wreck_category                enum type in 5 strings, plus null 
-        //obstruction_category          enum type plus null. A couple of issues in capitalisation e.g. "Foul ground" / "foul ground"
-        //status                        enum type plus null. 
-        //classification                empty; removed above
-        //position                      Latitude/Longitude in a standard format
-        //latitude                      latitude component of above 
-        //longitude                     longitude component of above
-        //horizontal_datum              single entry, "WGD 2", in all columns. removed above.
-        //limits                        unknown numerical data, plus a lot of nulls. Surprisingly small selection of entries, clearly many repeats. Futher investigation required. 
-        //position_method               enum type plus null. 
-        //depth                         float parsable, inc null  (TESTED, passed)
-        //height                        float parsable, inc null   (TESTED, passed)
-        //depth_method                  strings plus null. List of enums?
-        //depth_quality                 strings plus null. Enum/list of enums?
-        //depth_accuracy                float parsable, inc null
-        //water_depth                   int parsable, inc null (TESTED, passed)
-        //water_level_effect            enum type plus null. A couple of issues in capitalisation
-        //vertical_datum                enum type plus null.
-        //reported_year                 empty; removed above
-        //name                          string
-        //type                          enum type plus null.
-        //flag                          string representing a country, in various formats
-        //length                        float parsable, inc null (TESTED, passed)
-        //width                         float parsable, inc null  (TESTED, passed)
-        //draught                       float parsable, inc null (TESTED, passed)
-        //sonar_length                  float parsable, inc null (TESTED, passed)
-        //sonar_width                   float parsable, inc null (TESTED, passed)
-        //shadow_height                 float parsable, inc null (TESTED, passed)
-        //orientation                   float parsable, inc null, in degrees (TESTED, passed for float, need to test degrees validity)
-        //tonnage                       int parsable, inc null (TESTED, passed)
-        //tonnage_type                  enum type plus null.
-        //cargo                         string, or concievably enum list
-        //conspic_visual                enum (2 types), plus null
-        //conspic_radar                 enum (3 types), plus null
-        //date_sunk                     date in YYYYMMDD format, plus null
-        //non_sub_contact               two values, null or 1, very rarely included
-        //bottom_texture                mix of human readable string and list of ints(?). Futher investigation required.
-        //scour_dimensions              numerical data in what seems to be a specific format. includes null and UNKNOWN string. Futher investigation required.
-        //debris_field                  mix of human readable string and purely numeric. Futher investigation required.
-        //original_sensor               enum type plus null. 
-        //last_sensor                   enum type plus null. 
-        //original_detection_year       year/dates in multiple formats, inc null and UNKNOWN string
-        //last_detection_year           year/dates in multiple formats, inc null and UNKNOWN string
-        //original_source               enum or string
-        //markers                       string
-        //circumstances_of_loss         string (long)
-        //surveying_details             string (long)
-        //general_comments              string
-        //last_amended_date             date in YYYYMMDD format, plus null
+        //00 wreck_id                      handled above 
+        //01 wreck_category                enum type in 5 strings, plus null 
+        //02 obstruction_category          enum type plus null. A couple of issues in capitalisation e.g. "Foul ground" / "foul ground"
+        //03 status                        enum type plus null. 
+        //04 classification                empty; removed above
+        //05 position                      Latitude/Longitude in a standard format
+        //06 latitude                      latitude component of above 
+        //07 longitude                     longitude component of above
+        //08 horizontal_datum              single entry, "WGD 2", in all columns. removed above.
+        //09 limits                        unknown numerical data, plus a lot of nulls. Surprisingly small selection of entries, clearly many repeats. Futher investigation required. 
+        //10 position_method               enum type plus null. 
+        //11 depth                         float parsable, inc null  (TESTED, passed)
+        //12 height                        float parsable, inc null   (TESTED, passed)
+        //13 depth_method                  strings plus null. List of enums?
+        //14 depth_quality                 strings plus null. Enum/list of enums?
+        //15 depth_accuracy                float parsable, inc null
+        //16 water_depth                   int parsable, inc null (TESTED, passed)
+        //17 water_level_effect            enum type plus null. A couple of issues in capitalisation
+        //18 vertical_datum                enum type plus null.
+        //19 reported_year                 empty; removed above
+        //20 name                          string
+        //21 type                          enum type plus null.
+        //22 flag                          string representing a country, in various formats
+        //23 length                        float parsable, inc null (TESTED, passed)
+        //24 width                         float parsable, inc null  (TESTED, passed)
+        //25 draught                       float parsable, inc null (TESTED, passed)
+        //26 sonar_length                  float parsable, inc null (TESTED, passed)
+        //27 sonar_width                   float parsable, inc null (TESTED, passed)
+        //28 shadow_height                 float parsable, inc null (TESTED, passed)
+        //29 orientation                   float parsable, inc null, in degrees (TESTED, passed for float, need to test degrees validity)
+        //30 tonnage                       int parsable, inc null (TESTED, passed)
+        //31 tonnage_type                  enum type plus null.
+        //32 cargo                         string, or concievably enum list
+        //33 conspic_visual                enum (2 types), plus null
+        //34 conspic_radar                 enum (3 types), plus null
+        //35 date_sunk                     date in YYYYMMDD format, plus null (TESTED, NOT PASSED, actually inc other formats + UKNOWN)
+        //36 non_sub_contact               two values, null or 1, very rarely included
+        //37 bottom_texture                mix of human readable string and list of ints(?). Futher investigation required.
+        //38 scour_dimensions              numerical data in what seems to be a specific format. includes null and UNKNOWN string. Futher investigation required.
+        //39 debris_field                  mix of human readable string and purely numeric. Futher investigation required.
+        //40 original_sensor               enum type plus null. 
+        //41 last_sensor                   enum type plus null. 
+        //42 original_detection_year       year/dates in multiple formats, inc null and UNKNOWN string
+        //43 last_detection_year           year/dates in multiple formats, inc null and UNKNOWN string
+        //44 original_source               enum or string
+        //45 markers                       string
+        //46 circumstances_of_loss         string (long)
+        //47 surveying_details             string (long)
+        //48 general_comments              string
+        //49 last_amended_date             date in YYYYMMDD format, plus null (TESTED, passed)
 
 
         //basic numerical types can be checked to see if all entries parse. Columns 11, 12, 15, and 23-30 tested with respective data type and passed
@@ -489,11 +490,32 @@ class WrecksFileReader
             Console.WriteLine(row);
         }*/
 
-        output = TestParsableToFloat(getColumn(15), true);
+
+        //Dates are more complicated, as they occur in the same column in multiple formats. The last_amended_date column can all be parsed as yyyyMMdd (or null).
+        //date_sunk was originally believed to be in this format exclusively, but actually contains some dates in formats yyyy, yyyyMM, and an UNKNOWN string.
+        //Rows 42 and 43 need cleaning, and appear to include some bad data that cannot be parsed into any date format
+
+        output = TestParsableToDate(getColumn(43), true);
 
 
         Console.WriteLine("Unparseable: " + output.Count);
-        
+        foreach (int row in output)
+        {
+            //Console.WriteLine(row);
+            Console.WriteLine(row + ": " + getColumn(43)[row]);
+        }
+
+
+        ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
+        Console.WriteLine("\nData clean applied.");
+
+
+        /*
+    output = TestParsableToFloat(getColumn(15), true);
+
+
+    Console.WriteLine("Unparseable: " + output.Count);*/
+
         /*
         foreach (int row in output)
         {
@@ -502,8 +524,6 @@ class WrecksFileReader
         }*/
 
 
-        ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
-        Console.WriteLine("\nData clean applied.");
     }
 
     //finds redundant rows and returns a list of their indices
@@ -734,7 +754,7 @@ class WrecksFileReader
         return output;
     }
 
-    //returns a list of indices where parsing to int fails
+    //returns a list of indices where parsing to float fails
     List<int> TestParsableToFloat(string[] tokens, bool allowNull)
     {
         List<int> output = new List<int>();
@@ -747,6 +767,30 @@ class WrecksFileReader
                 if (!allowNull || (allowNull && !String.IsNullOrEmpty(tokens[i])))   //if allowing null, only add if non-null 
                     output.Add(i);
             }
+        }
+        return output;
+    }
+
+
+    //returns a list of indices where parsing to date fails
+    List<int> TestParsableToDate(string[] tokens, bool allowNull)
+    {
+        List<int> output = new List<int>();
+        DateOnly o;
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            //only testing if will parse, output value will not be used
+            bool parseToyyyyMMdd = DateOnly.TryParseExact(tokens[i], "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out o);
+            bool parseToyyyy = DateOnly.TryParseExact(tokens[i], "yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out o);
+            bool parseToyyyyMM = DateOnly.TryParseExact(tokens[i], "yyyyMM", CultureInfo.InvariantCulture, DateTimeStyles.None, out o);
+
+            if (!parseToyyyyMMdd && !parseToyyyy && !parseToyyyyMM)     
+            {
+                if (!allowNull || (allowNull && !String.IsNullOrEmpty(tokens[i])))   //if allowing null, only add if non-null 
+                    output.Add(i);
+            }
+
         }
         return output;
     }
