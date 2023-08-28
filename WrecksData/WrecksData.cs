@@ -539,13 +539,20 @@ class WrecksFileReader
 
 
         // This leaves a single unusal value in column 42 ( original_detection_year), row 83189: 0.89. This looks like it is from a different kind of data, and may be
-        //down to a column misalignment in the row.
+        //down to a column misalignment in the row. But checking that, it seems to not be the case and the value is completely incongruous. For these purposes the value
+        //will be changed to "UNKNOWN".
 
+        dataAmendments.Add(Tuple.Create(83189, 42, "UNKNOWN"));
 
+        /*
 
-
-
-
+        Console.WriteLine("\nContent list: ");
+        int i = 0;
+        foreach (String val in getRow(83189))
+        {
+            Console.WriteLine(headers[i] +  ": " + val);
+            i++;
+        }*/
 
 
         ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
