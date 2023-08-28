@@ -495,19 +495,62 @@ class WrecksFileReader
         //date_sunk was originally believed to be in this format exclusively, but actually contains some dates in formats yyyy, yyyyMM, and an UNKNOWN string.
         //Rows 42 and 43 need cleaning, and appear to include some bad data that cannot be parsed into any date format
 
-        output = TestParsableToDate(getColumn(43), true);
+        output = TestParsableToDate(getColumn(42), true, true);
 
 
         Console.WriteLine("Unparseable: " + output.Count);
         foreach (int row in output)
         {
             //Console.WriteLine(row);
-            Console.WriteLine(row + ": " + getColumn(43)[row]);
+            Console.WriteLine(row + ": " + getColumn(42)[row]);
         }
+
+        //With null and the UNKNOWN string allowed as entries, last_amended_date and date_sunk can be parsed without error.
+
+        //original_detection_year requires some cleaning
+        dataAmendments.Add(Tuple.Create(14676, 42, "2016"));  //replace 2016018
+        dataAmendments.Add(Tuple.Create(29061, 42, "20160419"));  //replace 20161904, assuming original is yyyyddMM
+        dataAmendments.Add(Tuple.Create(57455, 42, "UNKNOWN"));  //replace "Unknown" for consistency
+        dataAmendments.Add(Tuple.Create(69103, 42, "UNKNOWN"));  //replace "Unknown" for consistency
+        dataAmendments.Add(Tuple.Create(78234, 42, "20201221")); //replace 21 / 12 / 2020
+        dataAmendments.Add(Tuple.Create(82813, 42, "20210602"));  //replace 02 / 06 / 2021
+        dataAmendments.Add(Tuple.Create(89736, 42, "20220611"));  //replace 11 / 06 / 2022
+        dataAmendments.Add(Tuple.Create(94434, 42, "20210613"));  //replace 13 / 06 / 21
+        dataAmendments.Add(Tuple.Create(94778, 42, "20220616"));  //replace 16 / 06 / 2022
+        dataAmendments.Add(Tuple.Create(94805, 42, "20220605"));  //replace 2022 / 06 / 05
+        dataAmendments.Add(Tuple.Create(94821, 42, "20220616"));  //replace 16 / 06 / 2022
+        dataAmendments.Add(Tuple.Create(94828, 42, "20220605"));  //replace 2022 / 06 / 05
+        dataAmendments.Add(Tuple.Create(94848, 42, "20220616"));  //replace 16 / 06 / 2022
+        dataAmendments.Add(Tuple.Create(98951, 42, "20220917"));  //replace 17 / 09 / 2020
+        dataAmendments.Add(Tuple.Create(98958, 42, "20220917"));  //replace 17 / 09 / 2020
+
+        //last_detection_year
+        dataAmendments.Add(Tuple.Create(558, 43, "20161116"));  //replace 20161611, assuming original is yyyyddMM 
+        dataAmendments.Add(Tuple.Create(13053, 43, "20161016"));  //replace 20151610, assuming original is yyyyddMM 
+        dataAmendments.Add(Tuple.Create(57068, 43, "1968"));  //replace 19681984, assuming represents 2 years 1968/1984
+        dataAmendments.Add(Tuple.Create(59507, 43, "2015"));  //replace 201501115, as 01115 cannot be parsed and any single digit could have been an error
+        dataAmendments.Add(Tuple.Create(62809, 43, "20160314"));  //replace 201603014, assumed 3rd 0 is in error
+        dataAmendments.Add(Tuple.Create(63434, 43, "20160217"));  //replace 20161702, assuming original is yyyyddMM 
+        dataAmendments.Add(Tuple.Create(66967, 43, "198306"));  //replace 19836, assuming intent is yyyyMM
+        dataAmendments.Add(Tuple.Create(81725, 43, "201809"));  //replace 20189, assuming intent is yyyyMM
+        dataAmendments.Add(Tuple.Create(89736, 43, "20220611"));  //replace  11 / 06 / 2022
+        dataAmendments.Add(Tuple.Create(92883, 43, "20220113"));  //replace  13.01.2022
+        dataAmendments.Add(Tuple.Create(95437, 43, "20220818"));  //replace 20221808, assuming original is yyyyddMM 
+
+
+        // This leaves a single unusal value in column 42 ( original_detection_year), row 83189: 0.89. This looks like it is from a different kind of data, and may be
+        //down to a column misalignment in the row.
+
+
+
+
+
+
 
 
         ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
         Console.WriteLine("\nData clean applied.");
+
 
 
         /*
@@ -773,7 +816,7 @@ class WrecksFileReader
 
 
     //returns a list of indices where parsing to date fails
-    List<int> TestParsableToDate(string[] tokens, bool allowNull)
+    List<int> TestParsableToDate(string[] tokens, bool allowNull, bool allowUnknown)
     {
         List<int> output = new List<int>();
         DateOnly o;
@@ -787,8 +830,12 @@ class WrecksFileReader
 
             if (!parseToyyyyMMdd && !parseToyyyy && !parseToyyyyMM)     
             {
-                if (!allowNull || (allowNull && !String.IsNullOrEmpty(tokens[i])))   //if allowing null, only add if non-null 
-                    output.Add(i);
+                bool isNull = String.IsNullOrEmpty(tokens[i]);
+                bool isUnknown = tokens[i].Equals("UNKNOWN");
+
+                if (isNull && allowNull) { }        //do not add if null and nulls allowed
+                else if (isUnknown && allowUnknown) { } //do not add if unknown and unknown allowed
+                else output.Add(i);
             }
 
         }
