@@ -542,7 +542,18 @@ class WrecksFileReader
         //down to a column misalignment in the row. But checking that, it seems to not be the case and the value is completely incongruous. For these purposes the value
         //will be changed to "UNKNOWN".
 
+        PrintRow(83189);
+
         dataAmendments.Add(Tuple.Create(83189, 42, "UNKNOWN"));
+
+        /*
+        Console.WriteLine("\nContent list: ");
+        foreach (String val in GetDistictFromColumn(2))
+        {
+            Console.WriteLine(val);
+        }*/
+
+
 
         /*
 
@@ -847,6 +858,20 @@ class WrecksFileReader
 
         }
         return output;
+    }
+
+
+    //prints a data row
+    void PrintRow(int index)
+    {
+        String[] tokens = getRow(index);
+
+        Console.WriteLine(String.Format("\nRow {0}", index));
+
+        for (int i = 0; i < tokens.Length; i++ )
+        {
+            Console.WriteLine(String.Format("{0} {1}: {2}", i, headers[i], tokens[i]));
+        }
     }
 
 }
