@@ -495,15 +495,15 @@ class WrecksFileReader
         //date_sunk was originally believed to be in this format exclusively, but actually contains some dates in formats yyyy, yyyyMM, and an UNKNOWN string.
         //Rows 42 and 43 need cleaning, and appear to include some bad data that cannot be parsed into any date format
 
+        /*
         output = TestParsableToDate(getColumn(42), true, true);
-
 
         Console.WriteLine("Unparseable: " + output.Count);
         foreach (int row in output)
         {
             //Console.WriteLine(row);
             Console.WriteLine(row + ": " + getColumn(42)[row]);
-        }
+        }*/
 
         //With null and the UNKNOWN string allowed as entries, last_amended_date and date_sunk can be parsed without error.
 
@@ -546,13 +546,27 @@ class WrecksFileReader
 
         dataAmendments.Add(Tuple.Create(83189, 42, "UNKNOWN"));
 
+        //the latitude and longitude columns assumedly double the position column, split into its latitude and longitude components. We need to test this assumption.
+
         /*
-        Console.WriteLine("\nContent list: ");
-        foreach (String val in GetDistictFromColumn(2))
+        output = ValidatePositionData();
+
+        Console.WriteLine("Mismatches: " + output.Count);
+        foreach (int row in output)
         {
-            Console.WriteLine(val);
+            Console.WriteLine(row);
+            Console.WriteLine(row + " position: " + getColumn(5)[row] + ", lat: " + getColumn(6)[row] + ", long: " + getColumn(7)[row]);
         }*/
 
+        //checking reveals that this data is clean - all positions are a combination of the respective latitude and longitude values. 
+        //What to do with this data now depends on the format required. For these purposes, latitude and longitude will be stored seperately
+        //as two float values between -90 and 90 (lat) and -180 and 180 (long).
+        
+        //The combined position column will be redundant and can be removed.
+        columnsToRemove.Add(5);
+
+        //the values in latitude and longitude will need to be parsed to convert them to floats. This could be done on insterting the data into
+        //a datatable, or it could be done by converting the existing data to float parseable string values.
 
 
         /*
@@ -873,6 +887,29 @@ class WrecksFileReader
             Console.WriteLine(String.Format("{0} {1}: {2}", i, headers[i], tokens[i]));
         }
     }
+
+    //checks that all values in the position column are a combination of the values in respective latitude and longitude columns, and
+    //returns a list of mismatches
+    List<int> ValidatePositionData()
+    {
+        List<int> output = new List<int>();
+
+        string[] positions = getColumn(5);
+        string[] lats = getColumn(6);
+        string[] longs = getColumn(7);
+
+        for (int i = 0; i < positions.Length; i++)
+        {
+            string latlong = String.Format("{0},{1}", lats[i], longs[i]);
+            if (!positions[i].Equals(latlong))
+            {
+                output.Add(i);
+            }
+        }
+        return output;
+    }
+
+
 
 }
 
