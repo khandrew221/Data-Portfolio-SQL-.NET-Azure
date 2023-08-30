@@ -9,6 +9,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.ConstrainedExecution;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using static System.Net.Mime.MediaTypeNames;
 
 class MainEntry
 {
@@ -542,7 +543,7 @@ class WrecksFileReader
         //down to a column misalignment in the row. But checking that, it seems to not be the case and the value is completely incongruous. For these purposes the value
         //will be changed to "UNKNOWN".
 
-        PrintRow(83189);
+        //PrintRow(83189);
 
         dataAmendments.Add(Tuple.Create(83189, 42, "UNKNOWN"));
 
@@ -567,6 +568,29 @@ class WrecksFileReader
 
         //the values in latitude and longitude will need to be parsed to convert them to floats. This could be done on insterting the data into
         //a datatable, or it could be done by converting the existing data to float parseable string values.
+
+        //first test the format of all the values
+        int bad = 0;
+        foreach (String val in getColumn(6))
+        {
+            if (!validateLatitude(val))
+            {
+                bad++;
+                Console.WriteLine(val);
+            }
+        }
+        Console.WriteLine(bad + " bad values found in col 6");
+
+        bad = 0;
+        foreach (String val in getColumn(7))
+        {
+            if (!validateLongitude(val))
+            {
+                bad++;
+                Console.WriteLine(val);
+            }
+        }
+        Console.WriteLine(bad + " bad values found in col 7");
 
 
         /*
@@ -910,6 +934,46 @@ class WrecksFileReader
     }
 
 
+    //validates a latitude string with a true or false result. !!!Regex constructed here each time, poor
+    bool validateLatitude(string latString)
+    {
+        string pattern;
+        pattern = @"\d+";   //1+ digits
+        pattern += @"\s";   //single space
+        pattern += @"\d+";   //1+ digits
+        pattern += @"\.?";   //optional decimal point
+        pattern += @"\d*";   //any number of digits       
+        pattern += @"\s*";  //any amount of whitespace
+        pattern += @"[NS]$"; //N or S and end
+
+        Regex rgx = new Regex(pattern);
+
+        if (rgx.IsMatch(latString))
+            return true;
+        else
+            return false;
+    }
+
+
+    //validates a latitude string with a true or false result. !!!Regex constructed here each time, poor
+    bool validateLongitude(string latString)
+    {
+        string pattern;
+        pattern = @"\d+";   //1+ digits
+        pattern += @"\s";   //single space
+        pattern += @"\d+";   //1+ digits
+        pattern += @"\.?";   //optional decimal point
+        pattern += @"\d*";   //any number of digits       
+        pattern += @"\s*";  //any amount of whitespace
+        pattern += @"[WE]$"; //W or E and end
+
+        Regex rgx = new Regex(pattern);
+
+        if (rgx.IsMatch(latString))
+            return true;
+        else
+            return false;
+    }
 
 }
 
