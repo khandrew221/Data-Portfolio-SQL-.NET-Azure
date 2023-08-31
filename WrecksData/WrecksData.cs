@@ -593,6 +593,16 @@ class WrecksFileReader
         Console.WriteLine(bad + " bad values found in col 7");
 
 
+        foreach (String val in getColumn(6))
+        {
+            if (validateLatitude(val))
+            {
+                Console.WriteLine(parseLatitude(val));
+            }
+        }
+
+        //
+
         /*
 
         Console.WriteLine("\nContent list: ");
@@ -956,7 +966,7 @@ class WrecksFileReader
 
 
     //validates a latitude string with a true or false result. !!!Regex constructed here each time, poor
-    bool validateLongitude(string latString)
+    bool validateLongitude(string longString)
     {
         string pattern;
         pattern = @"\d+";   //1+ digits
@@ -969,10 +979,32 @@ class WrecksFileReader
 
         Regex rgx = new Regex(pattern);
 
-        if (rgx.IsMatch(latString))
+        if (rgx.IsMatch(longString))
             return true;
         else
             return false;
+    }
+
+    //parses a latitude string
+    //the latitude format gives degrees and decimal minutes North or South
+    //far a valid string, parses to float between -90 and 90 in degrees
+    //invalid string returns 0
+    float parseLatitude(string latString)
+    {
+        if (validateLatitude(latString))
+        {
+            string[] tokens = latString.Split(' ');
+            float degrees = float.Parse(tokens[0]);
+            float minutes = float.Parse(tokens[1]);
+            if (tokens[2].Equals("N"))
+                return degrees + minutes / 60;
+            else
+                return -(degrees + minutes / 60);
+        } 
+        else
+        {
+            return 0;  //may want more obvious error return value
+        }
     }
 
 }
