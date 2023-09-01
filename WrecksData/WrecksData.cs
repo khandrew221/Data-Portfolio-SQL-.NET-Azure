@@ -579,7 +579,7 @@ class WrecksFileReader
                 Console.WriteLine(val);
             }
         }
-        Console.WriteLine(bad + " bad values found in col 6");
+        Console.WriteLine(bad + " bad latitude values found in col 6");
 
         bad = 0;
         foreach (String val in getColumn(7))
@@ -590,16 +590,31 @@ class WrecksFileReader
                 Console.WriteLine(val);
             }
         }
-        Console.WriteLine(bad + " bad values found in col 7");
+        Console.WriteLine(bad + " bad longitude values found in col 7");
 
+        //testing shows all values are valid. Two parsers have been written to convert these values into 
+        //floats representing degrees. These can be run on transferring data from String format.
 
-        foreach (String val in getColumn(6))
+        /*
+                foreach (String val in getColumn(6))
+                {
+                    if (validateLatitude(val))
+                    {
+                        Console.WriteLine(parseLatitude(val));
+                    }
+                }*
+
+        foreach (String val in getColumn(7))
         {
-            if (validateLatitude(val))
+            if (validateLongitude(val))
             {
-                Console.WriteLine(parseLatitude(val));
+                Console.WriteLine(parseLongitude(val));
             }
-        }
+        }*/
+
+
+
+
 
         //
 
@@ -987,7 +1002,7 @@ class WrecksFileReader
 
     //parses a latitude string
     //the latitude format gives degrees and decimal minutes North or South
-    //far a valid string, parses to float between -90 and 90 in degrees
+    //far a valid string, should parse to float between -90 and 90 in degrees
     //invalid string returns 0
     float parseLatitude(string latString)
     {
@@ -1001,6 +1016,29 @@ class WrecksFileReader
             else
                 return -(degrees + minutes / 60);
         } 
+        else
+        {
+            return 0;  //may want more obvious error return value
+        }
+    }
+
+    //parses a longitude string
+    //the longitude format gives degrees and decimal minutes East or West
+    //far a valid string, should parse to float between -180 and 180 in degrees
+    //invalid string returns 0
+    float parseLongitude(string lonString)
+    {
+        if (validateLongitude(lonString))
+        {
+            string[] tokens = lonString.Split(' ');
+            float degrees = float.Parse(tokens[0]);
+            float minutes = float.Parse(tokens[1]);
+
+            if (tokens[2].Equals("E"))
+                return degrees + minutes / 60;
+            else
+                return -(degrees + minutes / 60);
+        }
         else
         {
             return 0;  //may want more obvious error return value
