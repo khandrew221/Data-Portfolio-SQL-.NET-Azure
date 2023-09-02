@@ -441,7 +441,7 @@ class WrecksFileReader
         //12 height                        float parsable, inc null   (TESTED, passed)
         //13 depth_method                  strings plus null. List of enums?
         //14 depth_quality                 strings plus null. Enum/list of enums?
-        //15 depth_accuracy                float parsable, inc null
+        //15 depth_accuracy                float parsable, inc null  (TESTED, passed)
         //16 water_depth                   int parsable, inc null (TESTED, passed)
         //17 water_level_effect            enum type plus null. A couple of issues in capitalisation
         //18 vertical_datum                enum type plus null.
@@ -629,8 +629,19 @@ class WrecksFileReader
         }*/
 
 
+        Console.WriteLine("\nNumber of columns to be removed: " + columnsToRemove.Count);
+        foreach (int i in columnsToRemove)
+        {
+            Console.WriteLine(String.Format("{0} {1}", i, headers[i]));
+        }
+        Console.WriteLine("\nNumber of rows to be removed: " + rowsToRemove.Count);
+        Console.WriteLine("Number of amendments to be made: " + dataAmendments.Count);
+
+
         ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
         Console.WriteLine("\nData clean applied.");
+
+
 
 
 
