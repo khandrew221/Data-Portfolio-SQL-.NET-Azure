@@ -613,8 +613,15 @@ class WrecksFileReader
         }*/
 
 
+        //Some values in column 2 have capitalisation issues, with two values being found that clearly refer to a single type:
+        // foul ground    Foul ground
+        // foul area      Foul area
+        // these could be handled on parsing to an enum, but if the most fundamental data types are to be used (in this case, string),
+        // they need to be fixed. There was also the possibility that "foul ground" and "foul area" were synonyms; after
+        // research this turned out not to be the case and the two are distinct categories that should not be conflated.
 
-
+        dataAmendments.UnionWith(FindAndReplaceInColumn(2, "Foul ground", "foul ground"));
+        dataAmendments.UnionWith(FindAndReplaceInColumn(2, "Foul area", "foul area"));
 
         //
 
@@ -641,7 +648,10 @@ class WrecksFileReader
         ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
         Console.WriteLine("\nData clean applied.");
 
-
+        foreach (String val in getColumn(2).Distinct())
+        {
+            Console.WriteLine(val);
+        }
 
 
 
@@ -1054,6 +1064,24 @@ class WrecksFileReader
         {
             return 0;  //may want more obvious error return value
         }
+    }
+
+
+    HashSet<Tuple<int, int, string>> FindAndReplaceInColumn(int colIndex, string find, string replace)
+    {
+        HashSet<Tuple<int, int, string>> output = new HashSet<Tuple<int, int, string>>();
+
+        string[] tokens = getColumn(colIndex);
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (tokens[i].Equals(find))
+            {
+                output.Add(Tuple.Create(i, colIndex, replace));
+            }
+        }
+
+        return output;
     }
 
 }
