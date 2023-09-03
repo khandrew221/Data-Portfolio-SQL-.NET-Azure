@@ -428,7 +428,7 @@ class WrecksFileReader
 
         //00 wreck_id                      handled above 
         //01 wreck_category                enum type in 5 strings, plus null 
-        //02 obstruction_category          enum type plus null. A couple of issues in capitalisation e.g. "Foul ground" / "foul ground"
+        //02 obstruction_category          enum type plus null. A couple of issues in capitalisation e.g. "Foul ground" / "foul ground" (CAPITALISATION FIXED)
         //03 status                        enum type plus null. 
         //04 classification                empty; removed above
         //05 position                      Latitude/Longitude in a standard format
@@ -443,7 +443,7 @@ class WrecksFileReader
         //14 depth_quality                 strings plus null. Enum/list of enums?
         //15 depth_accuracy                float parsable, inc null  (TESTED, passed)
         //16 water_depth                   int parsable, inc null (TESTED, passed)
-        //17 water_level_effect            enum type plus null. A couple of issues in capitalisation
+        //17 water_level_effect            enum type plus null. A couple of issues in capitalisation 
         //18 vertical_datum                enum type plus null.
         //19 reported_year                 empty; removed above
         //20 name                          string
@@ -613,8 +613,21 @@ class WrecksFileReader
         }*/
 
 
+        //Some values in column 2 have capitalisation issues, with two values being found that clearly refer to a single type:
+        // foul ground    Foul ground
+        // foul area      Foul area
+        // these could be handled on parsing to an enum, but if the most fundamental data types are to be used (in this case, string),
+        // they need to be fixed. There was also the possibility that "foul ground" and "foul area" were synonyms; after
+        // research this turned out not to be the case and the two are distinct categories that should not be conflated.
+
+        dataAmendments.UnionWith(FindAndReplaceInColumn(2, "Foul ground", "foul ground"));
+        dataAmendments.UnionWith(FindAndReplaceInColumn(2, "Foul area", "foul area"));
 
 
+        //similar can be fixed in column 17
+
+        dataAmendments.UnionWith(FindAndReplaceInColumn(17, "Covers and uncovers", "covers and uncovers"));
+        dataAmendments.UnionWith(FindAndReplaceInColumn(17, "Always under water/submerged", "always under water/submerged"));
 
         //
 
@@ -641,7 +654,10 @@ class WrecksFileReader
         ReplaceWithClean(columnsToRemove, rowsToRemove, dataAmendments);
         Console.WriteLine("\nData clean applied.");
 
-
+        foreach (String val in getColumn(14).Distinct())
+        {
+            Console.WriteLine(val);
+        }
 
 
 
@@ -1054,6 +1070,24 @@ class WrecksFileReader
         {
             return 0;  //may want more obvious error return value
         }
+    }
+
+
+    HashSet<Tuple<int, int, string>> FindAndReplaceInColumn(int colIndex, string find, string replace)
+    {
+        HashSet<Tuple<int, int, string>> output = new HashSet<Tuple<int, int, string>>();
+
+        string[] tokens = getColumn(colIndex);
+
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (tokens[i].Equals(find))
+            {
+                output.Add(Tuple.Create(i, colIndex, replace));
+            }
+        }
+
+        return output;
     }
 
 }
