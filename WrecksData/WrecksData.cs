@@ -232,12 +232,30 @@ class WrecksFileReader
     }
 
     //returns a safe array of all distinct values in a column, or an empty array for an invalid index
-    public string[] GetDistictFromColumn(int i)
+    //if the column values are a list, split the list if true
+    public string[] GetDistictFromColumn(int i, bool splitList)
     {
         string[] column = getColumn(i);
         if (column.Length != 0)
         {
-            return column.Distinct().ToArray();
+            if (splitList)
+            {
+                List<string> values = column.Distinct().ToList();
+                List<string> splitValues = new List<string>();
+                foreach (string value in values)
+                {
+                    string[] tokens = value.Split(',');
+                    foreach (string token in tokens)
+                    {
+                        splitValues.Add(TrimToken(token));
+                    }
+                }
+                return splitValues.Distinct().ToArray();
+            } 
+            else
+            {
+                return column.Distinct().ToArray();
+            }
         }
         return new string[0];
     }
@@ -629,7 +647,16 @@ class WrecksFileReader
         dataAmendments.UnionWith(FindAndReplaceInColumn(17, "Covers and uncovers", "covers and uncovers"));
         dataAmendments.UnionWith(FindAndReplaceInColumn(17, "Always under water/submerged", "always under water/submerged"));
 
-        //
+
+        //column 3 seems to contain either a single value or a comma seperated pair. Allowing lists to be split in the 
+        //GetDistictFromColumn method produces a sensible grouping of values if this is the case, (as opposed to treating the
+        //entire string, including comma, as a single distinct value
+        foreach (String val in GetDistictFromColumn(3, true))
+        {
+            Console.WriteLine(val);
+        }
+
+
 
         /*
 
